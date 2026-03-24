@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COPS – Control Operativo</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#f4f5f7;color:#1a1a1a;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid #e2e4e9;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:10}
+.logo{display:flex;align-items:center;gap:10px}
+.logobadge{width:34px;height:34px;border-radius:8px;background:#185FA5;display:flex;align-items:center;justify-content:center}
+.logobadge svg{width:18px;height:18px}
+.logotxt{font-size:16px;font-weight:600}
+.logosub{font-size:11px;color:#888}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.datetag{font-size:12px;color:#666;border:1px solid #e2e4e9;padding:4px 12px;border-radius:20px}
+.syncbtn{font-size:12px;padding:5px 13px;border-radius:7px;border:1px solid #e2e4e9;background:#fff;cursor:pointer;color:#185FA5;font-family:inherit}
+.syncbtn:hover{background:#f0f4f8}
+.sdot{width:7px;height:7px;border-radius:50%;background:#1D9E75;display:inline-block}
+.sdot.err{background:#c0392b}
+.sdot.syn{background:#d48806;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{max-width:1200px;margin:0 auto;padding:1.5rem 1.5rem 3rem}
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:#fff;border:1px solid #e2e4e9;border-radius:10px;padding:4px;width:fit-content;flex-wrap:wrap}
+.tab{font-size:13px;padding:6px 14px;border-radius:7px;cursor:pointer;color:#666;border:none;background:transparent;font-family:inherit;transition:all .15s;white-space:nowrap}
+.tab.active{background:#185FA5;color:#fff;font-weight:500}
+.tab:hover:not(.active){background:#f0f4f8;color:#1a1a1a}
+.pane{display:none}.pane.active{display:block}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem}
+.kpi{background:#fff;border:1px solid #e2e4e9;border-radius:10px;padding:14px 16px}
+.kpilbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.kpival{font-size:26px;font-weight:600;line-height:1}
+.kpival.g{color:#1D9E75}.kpival.r{color:#c0392b}.kpival.a{color:#d48806}.kpival.b{color:#185FA5}
+.kpisub{font-size:11px;color:#aaa;margin-top:4px}
+.card{background:#fff;border:1px solid #e2e4e9;border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.ctitle{font-size:12px;font-weight:600;color:#888;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
+.chart2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11px;font-weight:600;color:#888;text-align:left;padding:7px 10px;border-bottom:1px solid #e2e4e9;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f0f1f3;color:#1a1a1a;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f9fafb}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;font-weight:500;white-space:nowrap}
+.bG{background:#e6f7ef;color:#1D9E75}.bR{background:#fdecea;color:#c0392b}
+.bA{background:#fff8e1;color:#d48806}.bB{background:#e8f1fb;color:#185FA5}
+.bP{background:#f0eeff;color:#6246d6}.bGR{background:#f4f5f7;color:#666}
+.bDK{background:#f0f0f0;color:#1a1a1a}.bDC{background:#e1f5ee;color:#0F6E56}
+.bDT{background:#fef0e6;color:#e67e22}
+.bV{background:#f3e8ff;color:#8e44ad}
+.btn{font-size:12px;padding:6px 14px;border-radius:7px;border:1px solid #e2e4e9;background:#fff;cursor:pointer;color:#1a1a1a;font-family:inherit}
+.btn:hover{background:#f0f4f8}
+.btnp{background:#185FA5;color:#fff;border-color:#185FA5}
+.btnp:hover{background:#1a6bbf}
+.btns{font-size:11px;padding:4px 10px}
+.delbtn{font-size:11px;border:none;background:none;cursor:pointer;color:#ccc;padding:2px 6px;border-radius:4px}
+.delbtn:hover{color:#c0392b;background:#fdecea}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.frow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input[type=text],input[type=date],input[type=number],input[type=time],textarea{font-size:12px;padding:6px 10px;border-radius:7px;border:1px solid #e2e4e9;background:#fff;color:#1a1a1a;font-family:inherit;outline:none}
+select:focus,input:focus,textarea:focus{border-color:#185FA5}
+.av{width:28px;height:28px;border-radius:50%;background:#dce8f7;color:#185FA5;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;margin-right:7px;flex-shrink:0}
+.nc{display:flex;align-items:center}
+.pbb{background:#eef0f3;border-radius:999px;height:6px;width:100%}
+.pb{height:6px;border-radius:999px}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0f1f3}
+.srow:last-child{border-bottom:none}
+/* Asistencia rapida */
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;margin-bottom:16px}
+.gc{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 14px;background:#fff;border:1px solid #e2e4e9;border-radius:10px;gap:10px}
+.gc.eP{border-color:#1D9E75;background:#f6fef9}
+.gc.eF{border-color:#c0392b;background:#fef9f9}
+.gc.eR{border-color:#d48806;background:#fffdf0}
+.gc.ePG{border-color:#185FA5;background:#f0f6ff}
+.gc.ePS{border-color:#6246d6;background:#f5f0ff}
+.gc.eIN{border-color:#888;background:#f7f7f7}
+.gc.eRN{border-color:#1a1a1a;background:#f5f5f5}
+.gc.eDC{border-color:#0F6E56;background:#f0faf6}
+.gc.eDT{border-color:#e67e22;background:#fff8f0}
+.gc.eV{border-color:#8e44ad;background:#f9f0ff}
+.eb{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:180px}
+.estbtn{font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #e2e4e9;background:#fff;cursor:pointer;font-family:inherit;font-weight:500}
+.estbtn.eP{border-color:#1D9E75;color:#1D9E75}.estbtn.eP.on{background:#1D9E75;color:#fff}
+.estbtn.eF{border-color:#c0392b;color:#c0392b}.estbtn.eF.on{background:#c0392b;color:#fff}
+.estbtn.eR{border-color:#d48806;color:#d48806}.estbtn.eR.on{background:#d48806;color:#fff}
+.estbtn.ePG{border-color:#185FA5;color:#185FA5}.estbtn.ePG.on{background:#185FA5;color:#fff}
+.estbtn.ePS{border-color:#6246d6;color:#6246d6}.estbtn.ePS.on{background:#6246d6;color:#fff}
+.estbtn.eIN{border-color:#888;color:#888}.estbtn.eIN.on{background:#888;color:#fff}
+.estbtn.eRN{border-color:#1a1a1a;color:#1a1a1a}.estbtn.eRN.on{background:#1a1a1a;color:#fff}
+.estbtn.eDC{border-color:#0F6E56;color:#0F6E56}.estbtn.eDC.on{background:#0F6E56;color:#fff}
+.estbtn.eDT{border-color:#e67e22;color:#e67e22}.estbtn.eDT.on{background:#e67e22;color:#fff}
+.buscar{width:100%;margin-bottom:12px;font-size:13px;padding:8px 12px}
+.rb{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.rbi{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 12px;border-radius:8px;background:#f9fafb;border:1px solid #e2e4e9}
+.shdr{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:8px 0 6px;border-bottom-width:2px;border-bottom-style:solid;margin-bottom:10px}
+.ajbtn{font-size:10px;padding:2px 8px;border-radius:5px;border:1px solid #e2e4e9;background:#fff;cursor:pointer;color:#666;margin-top:4px;font-family:inherit}
+.active-view{background:#185FA5!important;color:#fff!important;border-color:#185FA5!important}
+/* Pre nomina */
+.snav{display:flex;align-items:center;gap:12px}
+.slbl{font-size:13px;font-weight:500;min-width:220px;text-align:center}
+.rng{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.rnc{background:#fff;border:1px solid #e2e4e9;border-radius:10px;padding:12px 16px}
+.rnl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.rnv{font-size:20px;font-weight:600}
+.rnv.g{color:#1D9E75}.rnv.r{color:#c0392b}.rnv.a{color:#d48806}.rnv.b{color:#185FA5}
+.dg{border:1px solid #e2e4e9;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.dgh{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f9fafb;cursor:pointer;border-bottom:1px solid #e2e4e9}
+.dgh:hover{background:#f0f4f8}
+.dghl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dghr{display:flex;align-items:center;gap:12px;font-size:13px}
+.dgb{display:none;padding:0}
+.dgb.open{display:block}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:7px 16px;border-bottom:1px solid #f4f5f7;font-size:13px}
+.cr:last-child{border-bottom:none}
+.cr.tot{background:#f9fafb;font-weight:600;padding:10px 16px}
+.cr.neg .mn{color:#c0392b}
+.cr.pos .mn{color:#1D9E75}
+/* Modales */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.mo.open{display:flex}
+.md{background:#fff;border-radius:12px;padding:24px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.md h3{font-size:15px;font-weight:600;margin-bottom:16px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fgf{grid-column:1/-1}
+.fgl{display:flex;flex-direction:column;gap:4px}
+.fgl label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.04em}
+.fgl input,.fgl select,.fgl textarea{width:100%}
+.mbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;font-size:13px;padding:10px 18px;border-radius:8px;z-index:999;opacity:0;transform:translateY(10px);transition:all .2s;pointer-events:none}
+.toast.on{opacity:1;transform:translateY(0)}
+.toast.s{background:#1D9E75}.toast.e{background:#c0392b}
+.empty{color:#aaa;font-size:13px;text-align:center;padding:2rem 0}
+.pcard{border:1px solid #e2e4e9;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
+@media(max-width:640px){
+  .chart2{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .topbar{padding:0 1rem}
+  .main{padding:1rem 1rem 2rem}
+  .fg{grid-template-columns:1fr}
+  .gg{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">
+    <img src="logo_cops.PNG" alt="COPS" style="height:40px;width:auto;object-fit:contain;flex-shrink:0">
+    <div><div class="logotxt">COPS</div><div class="logosub">Control Operativo</div></div>
+  </div>
+  <div class="topbar-r">
+    <span class="sdot" id="sdot"></span>
+    <div class="datetag" id="dtag"></div>
+    <button class="syncbtn" id="syncbtn" >↻ Sincronizar</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="asistencia">Asistencia Rápida</button>
+    <button class="tab" data-tab="historial">Historial</button>
+    <button class="tab" data-tab="servicios">Servicios</button>
+    <button class="tab" data-tab="prenomina">Pre-Nómina</button>
+    <button class="tab" data-tab="reporte">Reporte</button>
+    <button class="tab" data-tab="personal">Personal</button>
+    <button class="tab" data-tab="prestamos">Préstamos</button>
+    <button class="tab" data-tab="reclutamiento">Reclutamiento</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="pane active" id="pane-dashboard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn dash-period-btn active-view" data-period="dia">Hoy</button>
+        <button class="btn dash-period-btn" data-period="semana">Semana</button>
+        <button class="btn dash-period-btn" data-period="mes">Mes</button>
+        <button class="btn dash-period-btn" data-period="anio">Año</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btns" data-dash-nav="-1">← Anterior</button>
+        <span style="font-size:13px;font-weight:500;color:#185FA5;min-width:200px;text-align:center" id="dash-date-lbl">—</span>
+        <button class="btn btns" data-dash-nav="1">Siguiente →</button>
+      </div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpilbl">Total guardias</div><div class="kpival b" id="k-tot">37</div><div class="kpisub">en nómina</div></div>
+      <div class="kpi"><div class="kpilbl" id="k-pre-lbl">Presentes</div><div class="kpival g" id="k-pre">—</div><div class="kpisub" id="k-prep">—</div></div>
+      <div class="kpi"><div class="kpilbl">Faltas</div><div class="kpival r" id="k-fal">—</div><div class="kpisub" id="k-falp">—</div></div>
+      <div class="kpi"><div class="kpilbl">Retardos</div><div class="kpival a" id="k-ret">—</div><div class="kpisub" id="k-retp">—</div></div>
+      <div class="kpi"><div class="kpilbl">Incap./Permisos</div><div class="kpival a" id="k-sreg">—</div><div class="kpisub" id="k-sreg-sub">pendientes</div></div>
+      <div class="kpi"><div class="kpilbl">Servicios activos</div><div class="kpival b" id="k-svc">—</div><div class="kpisub">con personal</div></div>
+      <div class="kpi"><div class="kpilbl">Servicios afectados</div><div class="kpival r" id="k-svcr">—</div><div class="kpisub">con ausencias</div></div>
+    </div>
+    <div class="chart2">
+      <div class="card">
+        <div class="ctitle">Asistencia del período — desglose</div>
+        <div style="position:relative;height:200px"><canvas id="chartPie"></canvas></div>
+        <div style="display:flex;gap:8px;margin-top:10px;font-size:11px;color:#888;flex-wrap:wrap" id="dash-legend"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle" id="dash-trend-title">Tendencia</div>
+        <div style="position:relative;height:200px"><canvas id="chartTrend"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Afectación por servicio en el período</div>
+      <div id="afect-tabla" style="overflow-x:auto"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Cobertura por servicio</div>
+      <div id="svc-list"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Últimos registros</div>
+      <div class="tw"><table><thead><tr><th>Guardia</th><th>Servicio</th><th>Estatus</th><th>Fecha</th></tr></thead><tbody id="dash-tbl"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ASISTENCIA RAPIDA -->
+  <div class="pane" id="pane-asistencia">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="ctitle" style="margin-bottom:2px">Asistencia del día</div>
+          <div style="font-size:15px;font-weight:600" id="ar-lbl">—</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="date" id="ar-fecha">
+          <button class="btn" id="btn-todos-presente">✓ Todos presentes</button>
+          <button class="btn" id="btn-limpiar-todo">✕ Limpiar todo</button>
+          <button class="btn btnp" id="btn-guardar" >↑ Guardar día</button>
+        </div>
+      </div>
+      <div class="rb" id="ar-resumen"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <input type="text" class="buscar" id="ar-buscar" placeholder="🔍 Buscar guardia..."  style="margin-bottom:0;flex:1;min-width:180px">
+        <div style="display:flex;gap:4px">
+          <button class="btn btns ar-view-btn active-view" data-view="servicio" >Por servicio</button>
+          <button class="btn btns ar-view-btn" data-view="turno" >Diurno/Nocturno</button>
+          <button class="btn btns ar-view-btn" data-view="alfa" >Alfabético</button>
+        </div>
+      </div>
+      <div id="gg-container"></div>
+    </div>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="pane" id="pane-historial">
+    <div class="toolbar">
+      <div class="frow">
+        <select id="fil-est">
+          <option value="">Todos los estatus</option>
+          <option>Presente</option><option>Falta</option><option>Retardo</option>
+          <option>Permiso con Goce</option><option>Permiso sin Goce</option>
+          <option>Incapacidad</option><option>Renuncia</option>
+          <option>Descanso</option><option>Descanso Trabajado</option>
+        </select>
+        <input type="text" id="fil-nom" placeholder="Buscar guardia..."  style="width:200px">
+        <input type="date" id="fil-fec">
+        <button class="btn btns" id="btn-limp-fil">✕ Limpiar</button>
+      </div>
+    </div>
+    <div class="card"><div class="tw"><table><thead><tr><th>Fecha</th><th>Guardia</th><th>Servicio</th><th>Estatus</th><th>Nota</th><th></th></tr></thead><tbody id="hist-tbl"></tbody></table></div></div>
+  </div>
+
+  <!-- SERVICIOS -->
+  <div class="pane" id="pane-servicios">
+    <div class="toolbar">
+      <div class="frow">
+        <select id="fil-svc"><option value="">Todos</option><option>Cubierto</option><option>Incompleto</option><option>Sin personal</option><option>Sin servicio hoy</option></select>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btns" id="btn-config-horarios">&#9881; Horarios</button>
+        <button class="btn btnp" id="btn-nuevo-svc">+ Nuevo servicio</button>
+      </div>
+    </div>
+    <div class="card"><div class="tw"><table><thead><tr><th>Servicio</th><th>Asignados</th><th>Presentes hoy</th><th>Cobertura</th><th>Estatus</th><th>Info</th></tr></thead><tbody id="svc-tbl"></tbody></table></div></div>
+  </div>
+
+  <!-- PRE-NOMINA -->
+  <div class="pane" id="pane-prenomina">
+    <div class="card" style="margin-bottom:14px">
+      <div class="ctitle">Configuración de tarifas generales</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+        <div class="fgl"><label>% extra horas extra</label><input type="number" id="cfg-extra" value="100" min="0"></div>
+        <div class="fgl"><label>% extra domingo/festivo</label><input type="number" id="cfg-dom" value="100" min="0"></div>
+        <div class="fgl"><label>Descuento bono por falta ($)</label><input type="number" id="cfg-falta" value="100" min="0"></div>
+        <input type="hidden" id="cfg-ret" value="0">
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="snav">
+        <button class="btn btns" data-sem-nav="-1">← Anterior</button>
+        <span class="slbl" id="sem-lbl">—</span>
+        <button class="btn btns" data-sem-nav="1">Siguiente →</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btnp" id="btn-nuevo-turno">+ Turno</button>
+        <button class="btn btnp" id="btn-nuevo-prest-nom">+ Préstamo</button>
+        <button class="btn" id="btn-exportar">⬇ Exportar CSV</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#888;background:#f0f4f8;border-radius:8px;padding:8px 14px;margin-bottom:10px">
+      ℹ La asistencia registrada en <strong>Asistencia Rápida</strong> alimenta automáticamente los cálculos. Usa <strong>+ Turno</strong> para horas extra o tipos de día especiales.
+    </div>
+    <div class="rng" id="rng"></div>
+    <div id="nom-lista"></div>
+  </div>
+
+  <!-- REPORTE -->
+  <div class="pane" id="pane-reporte">
+    <div class="toolbar">
+      <div class="frow">
+        <label style="font-size:12px;color:#666">Semana:</label>
+        <button class="btn btns" data-rep-nav="-1">← Anterior</button>
+        <span id="rep-lbl" style="font-size:13px;font-weight:500;min-width:200px;text-align:center">—</span>
+        <button class="btn btns" data-rep-nav="1">Siguiente →</button>
+      </div>
+      <button class="btn" id="btn-rep-print">🖨 Imprimir</button>
+    </div>
+    <div id="reporte-container" style="overflow-x:auto"></div>
+  </div>
+
+  <!-- PERSONAL -->
+  <div class="pane" id="pane-personal">
+    <div class="toolbar">
+      <div style="font-size:13px;color:#666">Gestión de guardias — los cambios se aplican de inmediato en todo el dashboard</div>
+      <button class="btn btnp" id="btn-nuevo-guardia">+ Agregar guardia</button>
+    </div>
+    <div class="card">
+      <div class="frow" style="margin-bottom:12px">
+        <input type="text" id="fil-personal" placeholder="Buscar guardia..."  style="width:220px">
+        <select id="fil-turno-personal">
+          <option value="">Todos los turnos</option>
+          <option value="diurno">Diurno</option>
+          <option value="nocturno">Nocturno</option>
+        </select>
+      </div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Guardia</th><th>Puesto</th><th>Servicio</th><th>Turno</th><th>Horas</th><th>Sueldo semanal</th><th>INFONAVIT</th><th>FONACOT</th><th>Préstamo</th><th></th></tr></thead>
+          <tbody id="personal-tbl"></tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="ctitle" style="margin:0">Plantilla de personal</div>
+        <button class="btn btns" id="btn-refresh-plantilla">↻ Actualizar</button>
+      </div>
+      <div id="plantilla-tbl"></div>
+    </div>
+</div>
+
+  <!-- PRESTAMOS -->
+  <div class="pane" id="pane-prestamos">
+    <div class="toolbar">
+      <div style="font-size:13px;color:#666">Control de préstamos — aplica el descuento manualmente cada semana</div>
+      <button class="btn btnp" id="btn-nuevo-prestamo-tab">+ Nuevo préstamo</button>
+    </div>
+    <div id="prest-lista"><div class="empty">Sin préstamos activos.</div></div>
+  </div>
+
+  <!-- RECLUTAMIENTO -->
+  <div class="pane" id="pane-reclutamiento">
+    <div class="toolbar">
+      <div class="frow">
+        <select id="fil-rec"><option value="">Todos</option><option>Candidato</option><option>En proceso</option><option>Aprobado</option><option>Rechazado</option></select>
+      </div>
+      <button class="btn btnp" id="btn-nuevo-cand">+ Candidato</button>
+    </div>
+    <div class="card"><div class="tw"><table><thead><tr><th>Candidato</th><th>Estatus</th><th>Fecha</th><th></th></tr></thead><tbody id="rec-tbl"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- MODALES -->
+  <!-- MODAL HORARIOS -->
+  <div class="mo" id="m-horarios">
+    <div class="md" style="width:660px;max-width:95vw;max-height:85vh;overflow-y:auto">
+      <h3>&#9881; Horarios por servicio</h3>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">Marca los dias activos de cada servicio. Los dias sin marcar no cuentan como falta ni afectan la cobertura.</div>
+      <div id="horarios-lista"></div>
+      <div class="mbtns">
+        <button class="btn" id="btn-cancel-horarios">Cancelar</button>
+        <button class="btn btnp" id="btn-save-horarios">Guardar</button>
+      </div>
+    </div>
+  </div>
+<div class="mo" id="m-svc"><div class="md"><h3>Nuevo servicio</h3>
+  <div class="fg">
+    <div class="fgl fgf"><label>Nombre del servicio</label><input type="text" id="ms-nom"></div>
+    <div class="fgl"><label>Guardias requeridos</label><input type="number" id="ms-req" value="1" min="0"></div>
+    <div class="fgl"><label>Guardias cubiertos</label><input type="number" id="ms-cub" value="0" min="0"></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-svc">Cancelar</button><button class="btn btnp" id="btn-save-svc">Guardar</button></div>
+</div></div>
+
+<div class="mo" id="m-turno"><div class="md"><h3>Registrar turno</h3>
+  <div class="fg">
+    <div class="fgl"><label>Fecha</label><input type="date" id="mt-fecha"></div>
+    <div class="fgl"><label>Guardia</label><select id="mt-guardia"></select></div>
+    <div class="fgl fgf"><label>Servicio</label><select id="mt-servicio"></select></div>
+    <div class="fgl"><label>Turno</label>
+      <select id="mt-turno">
+        <option value="M1">1° Mañana 07:00–19:00</option>
+        <option value="M2">1° Mañana 08:00–18:00</option>
+        <option value="M3">1° Mañana 06:00–18:00</option>
+        <option value="N1">2° Tarde/Noche 17:00–08:00</option>
+        <option value="N2">2° Nocturno 19:00–07:00</option>
+        <option value="N3">2° Nocturno 18:00–06:00</option>
+        <option value="24">24 horas</option>
+        <option value="X">Personalizado</option>
+      </select>
+    </div>
+    <div class="fgl"><label>Hora entrada</label><input type="time" id="mt-ent" value="07:00"></div>
+    <div class="fgl"><label>Hora salida</label><input type="time" id="mt-sal" value="19:00"></div>
+    <div class="fgl fgf"><label>Tipo de día</label>
+      <select id="mt-tipo">
+        <option value="normal">Normal</option><option value="domingo">Domingo</option>
+        <option value="festivo">Día festivo</option><option value="descanso">Descanso trabajado</option>
+        <option value="doblete">Doblete</option>
+      </select>
+    </div>
+    <div class="fgl fgf" id="mt-prev" style="background:#f9fafb;border:1px solid #e2e4e9;border-radius:8px;padding:12px;display:none">
+      <label>Vista previa del pago</label>
+      <div id="mt-prev-body" style="font-size:13px;margin-top:6px"></div>
+    </div>
+    <div class="fgl fgf"><label>Notas</label><input type="text" id="mt-notas" placeholder="Opcional"></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-turno">Cancelar</button><button class="btn btnp" id="btn-save-turno">Guardar</button></div>
+</div></div>
+
+<div class="mo" id="m-prest"><div class="md"><h3>Préstamo / Descuento</h3>
+  <div class="fg">
+    <div class="fgl"><label>Guardia</label><select id="mp-guardia"></select></div>
+    <div class="fgl"><label>Fecha</label><input type="date" id="mp-fecha"></div>
+    <div class="fgl"><label>Monto ($)</label><input type="number" id="mp-monto" min="0" placeholder="0.00"></div>
+    <div class="fgl"><label>Tipo</label><select id="mp-tipo"><option value="prestamo">Préstamo</option><option value="descuento">Descuento</option><option value="bono">Bono</option></select></div>
+    <div class="fgl fgf"><label>Concepto</label><input type="text" id="mp-concepto" placeholder="Ej. uniforme, préstamo personal..."></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-prest">Cancelar</button><button class="btn btnp" id="btn-save-prest">Guardar</button></div>
+</div></div>
+
+<div class="mo" id="m-ajuste"><div class="md"><h3>Ajuste de pago del día</h3>
+  <input type="hidden" id="aj-nom">
+  <p style="font-size:13px;color:#666;margin-bottom:14px" id="aj-lbl"></p>
+  <div class="fg">
+    <div class="fgl"><label>Bono extra ($)</label><input type="number" id="aj-bono" min="0" value="0"></div>
+    <div class="fgl"><label>Descuento extra ($)</label><input type="number" id="aj-desc" min="0" value="0"></div>
+    <div class="fgl fgf"><label>Nota del día (aparece en Pre-Nómina)</label><textarea id="aj-nota" rows="2" style="resize:vertical" placeholder="Ej. cubrió a García, llegó tarde por accidente..."></textarea></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-aj">Cancelar</button><button class="btn btnp" id="btn-save-aj">Aplicar</button></div>
+</div></div>
+
+<div class="mo" id="m-nprest"><div class="md"><h3>Registrar nuevo préstamo</h3>
+  <div class="fg">
+    <div class="fgl fgf"><label>Guardia</label><select id="np-guardia"></select></div>
+    <div class="fgl"><label>Monto total ($)</label><input type="number" id="np-total" min="0" placeholder="0.00" ></div>
+    <div class="fgl"><label>Descuento semanal ($)</label><input type="number" id="np-semanal" min="0" placeholder="0.00" ></div>
+    <div class="fgl fgf" id="np-prev" style="background:#f9fafb;border:1px solid #e2e4e9;border-radius:8px;padding:10px;display:none">
+      <label>Vista previa</label>
+      <div id="np-prev-body" style="font-size:13px;margin-top:4px"></div>
+    </div>
+    <div class="fgl fgf"><label>Concepto / Motivo</label><input type="text" id="np-concepto" placeholder="Ej. Préstamo personal, anticipo uniforme..."></div>
+    <div class="fgl"><label>Fecha inicio</label><input type="date" id="np-fecha"></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-nprest">Cancelar</button><button class="btn btnp" id="btn-save-nprest">Registrar</button></div>
+</div></div>
+
+<div class="mo" id="m-guardia"><div class="md" style="width:560px"><h3 id="mg-titulo">Agregar guardia</h3>
+  <input type="hidden" id="mg-idx" value="-1">
+  <div class="fg">
+    <div class="fgl fgf"><label>Nombre completo</label><input type="text" id="mg-nombre" placeholder="Apellido, Nombre"></div>
+    <div class="fgl fgf"><label>Puesto (opcional)</label><input type="text" id="mg-puesto" placeholder="Ej. Gerente, Coordinador..."></div>
+    <div class="fgl fgf"><label>Fecha de ingreso</label><input type="date" id="mg-ingreso"></div>
+    <div class="fgl"><label>Servicio asignado</label><select id="mg-servicio"></select></div>
+    <div class="fgl"><label>Turno</label>
+      <select id="mg-turno">
+        <option value="M1">1° Mañana 07:00–19:00</option>
+        <option value="M2">1° Mañana 08:00–18:00</option>
+        <option value="M3">1° Mañana 06:00–18:00</option>
+        <option value="N1">2° Tarde/Noche 17:00–08:00</option>
+        <option value="N2">2° Nocturno 19:00–07:00</option>
+        <option value="N3">2° Nocturno 18:00–06:00</option>
+        <option value="24">24 horas</option>
+      </select>
+    </div>
+    <div class="fgl"><label>Horas por turno</label><input type="number" id="mg-horas" value="12" min="1" max="24"></div>
+    <div class="fgl"><label>Sueldo semanal ($)</label><input type="number" id="mg-semanal" min="0" step="0.01" placeholder="0.00"></div>
+    <div class="fgl"><label>Días por semana</label><input type="number" id="mg-dias" min="1" max="7" value="6" ></div>
+    <div class="fgl fgf" id="mg-prev-tarifa" style="background:#f0f4f8;border-radius:8px;padding:8px 12px;display:none">
+      <label>Tarifa por hora calculada</label>
+      <div id="mg-prev-tarifa-body" style="font-size:14px;font-weight:600;color:#185FA5;margin-top:4px"></div>
+    </div>
+    <input type="hidden" id="mg-tarifa">
+    <div class="fgl"><label>INFONAVIT semanal ($)</label><input type="number" id="mg-infonavit" min="0" step="0.01" value="0"></div>
+    <div class="fgl"><label>FONACOT semanal ($)</label><input type="number" id="mg-fonacot" min="0" step="0.01" value="0"></div>
+    <div class="fgl"><label>Préstamo fijo semanal ($)</label><input type="number" id="mg-prestamo" min="0" step="0.01" value="0"></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-guardia">Cancelar</button><button class="btn btnp" id="btn-save-guardia">Guardar</button></div>
+</div></div>
+
+<div class="mo" id="m-cand"><div class="md"><h3>Agregar candidato</h3>
+  <div class="fg">
+    <div class="fgl fgf"><label>Nombre</label><input type="text" id="mc-nom" placeholder="Nombre completo"></div>
+    <div class="fgl"><label>Estatus</label><select id="mc-est"><option>Candidato</option><option>En proceso</option><option>Aprobado</option><option>Rechazado</option></select></div>
+    <div class="fgl"><label>Fecha</label><input type="date" id="mc-fecha"></div>
+  </div>
+  <div class="mbtns"><button class="btn" id="btn-cancel-cand">Cancelar</button><button class="btn btnp" id="btn-save-cand">Guardar</button></div>
+</div></div>
+
+<div class="toast" id="tst"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var API = "https://script.google.com/macros/s/AKfycbwJh5QSXIaW8a5h5JMpoiyzvE00lmm877XgyVv5lMks3lDunGVf_dKwNVOANIYXwUkPjQ/exec";
+
+var PERSONAL = ["ACOSTA GÓMEZ, JOSÉ MANUEL","AGUILAR MONTOYA, EDGAR ADRIÁN","AGUIRRE VÁZQUEZ, URIEL","ALVARADO GÓMEZ, DARÍO","AYALA PIEDRA, JUAN CARLOS","BLANCO PANAMÁ, GUSTAVO","CABALLERO BARRAZA, IGNACIO JAVIER","CELEDÓN, ISAÍAS","CHÁVEZ LUÉVANO, JUAN JOSÉ","CHÁVEZ NAVARRO, CHRISTIAN ALONSO","CHÁVEZ PULIDO, JOSÉ ALONSO","CHÁVEZ ZAMORA, LILIBETH","CORRAL SANTANA, MARTÍN UBALDO","DANIEL, JAIME","GONZÁLEZ ARREGUÍN, CÉSAR","LARA ENRÍQUEZ, EMILIO","LÁZARO LÁZARO, CÉSAR AUGUSTO","LORENZO GÓMEZ, FAUSTINO","LOZANO TORRES, JANIS XAVIERA","LÓPEZ OJEDA, RAFAEL","LÓPEZ VALDÉZ, GERARDO","LÓPEZ ZÚÑIGA, BENITO","MARÍN REYES, ANTONIO","MARTÍNEZ SANTELLÁN, ENRIQUE","MÉNDEZ DE LA CRUZ, ARSELIO","MORALES MENDOZA, CELESTINO","MUÑOZ RIVERA, ROBERTO","OLIVAS DURÁN, ARMANDO","OLIVARES QUIÑONEZ, FERNANDO ALEXANDRO","PALACIOS DEL TORO, SALVADOR","PEÑA FELICIANO, VÍCTOR","PÉREZ RODARTE, MIGUEL ÁNGEL","RAMOS SANTOS, OSCAR FRANCISCO","RAMÍREZ, JESÚS","RODRÍGUEZ HERNÁNDEZ, ISIDRO","RODRÍGUEZ MÁRQUEZ, GABRIEL","ROMERO DE LA CRUZ, DANIEL","ROMERO PAYÁN, JOSÉ EDUARDO","RÍOS QUIÑONES, SHEILA PAOLA","VALANDRANO HERNÁNDEZ, FRANCISCO JAVIER"];
+
+var SERVICIOS = ["M-6","Construmás","Miscelec","Plaza Olivos","Plaza Dekoro","Plaza Patita","Transportes Reyna","Ofimer","Plaza Campestre","Plaza Magnolia","Plaza San Andrés","Plaza Bistro","Specialty Bolt","Transdien","Colegio San Patricio (Campus Villa Alegre)","Colegio San Patricio (Campus Valle Del Sol)","Misión De los Lagos"];
+
+var CUBRE_DESCANSOS = [
+  "LÓPEZ VALDÉZ, GERARDO",
+  "ROMERO DE LA CRUZ, DANIEL",
+  "OLIVAS DURÁN, ARMANDO"
+];
+var OFICINA_SVC = "M-6";
+// Fecha de ingreso por guardia {nombre: "YYYY-MM-DD"}
+var INGRESOS = {};
+// Fecha de renuncia por guardia {nombre: "YYYY-MM-DD"}
+var FECHAS_RENUNCIA = {};
+
+function getFechaIngreso(n){ return INGRESOS[n]||''; }
+function getFechaRenuncia(n){ return FECHAS_RENUNCIA[n]||''; }
+
+function guardiaActivoEnFecha(n, fechaStr){
+  // Not yet joined
+  var ing=getFechaIngreso(n);
+  if(ing && fechaStr < ing) return false;
+  // Already resigned
+  var ren=getFechaRenuncia(n);
+  if(ren && fechaStr > ren) return false;
+  return true;
+}
+
+function guardiaRenuncio(n){
+  return !!getFechaRenuncia(n);
+} // Oficina administrativa COPS, no es servicio cliente
+
+// Horarios por servicio - dias activos (0=Dom,1=Lun,2=Mar,3=Mie,4=Jue,5=Vie,6=Sab)
+// Default para servicios no configurados: todos los dias
+// SVC_HORARIOS: configuracion por servicio
+// Estructura: { "Servicio": { schedule: [ {dow:0,activo:false,ent:'',sal:''}, ... 7 dias ] } }
+// dow: 0=Dom,1=Lun,2=Mar,3=Mie,4=Jue,5=Vie,6=Sab
+var SVC_HORARIOS = {
+  "Specialty Bolt": {schedule:[
+    {dow:0,activo:false,ent:'',sal:''},{dow:1,activo:true,ent:'08:00',sal:'20:00'},
+    {dow:2,activo:true,ent:'08:00',sal:'20:00'},{dow:3,activo:true,ent:'08:00',sal:'20:00'},
+    {dow:4,activo:true,ent:'08:00',sal:'20:00'},{dow:5,activo:true,ent:'08:00',sal:'20:00'},
+    {dow:6,activo:false,ent:'',sal:''}
+  ]},
+  "Colegio San Patricio (Campus Valle Del Sol)": {schedule:[
+    {dow:0,activo:false,ent:'',sal:''},{dow:1,activo:true,ent:'07:00',sal:'19:00'},
+    {dow:2,activo:true,ent:'07:00',sal:'19:00'},{dow:3,activo:true,ent:'07:00',sal:'19:00'},
+    {dow:4,activo:true,ent:'07:00',sal:'19:00'},{dow:5,activo:true,ent:'07:00',sal:'19:00'},
+    {dow:6,activo:true,ent:'07:00',sal:'13:00'}
+  ]}
+};
+
+function getDefaultSchedule(){
+  var s=[];
+  for(var d=0;d<7;d++) s.push({dow:d,activo:true,ent:'07:00',sal:'19:00'});
+  return s;
+}
+function getSvcSchedule(svc){
+  if(SVC_HORARIOS[svc]&&SVC_HORARIOS[svc].schedule) return SVC_HORARIOS[svc].schedule;
+  return getDefaultSchedule();
+}
+function getSvcHorario(svc){
+  var sch=getSvcSchedule(svc);
+  return {dias:sch.filter(function(d){return d.activo;}).map(function(d){return d.dow;})};
+}
+function diaTieneServicio(svc,dow){
+  var sch=getSvcSchedule(svc);
+  var day=sch.find(function(d){return d.dow===dow;});
+  return day?day.activo:true;
+}
+function getHorasTurno(svc,dow){
+  var sch=getSvcSchedule(svc);
+  var day=sch.find(function(d){return d.dow===dow;});
+  if(!day||!day.activo||!day.ent||!day.sal) return 12;
+  var e=day.ent.split(':'), s=day.sal.split(':');
+  var h=(parseInt(s[0])*60+parseInt(s[1]))-(parseInt(e[0])*60+parseInt(e[1]));
+  return Math.round(h/60*10)/10;
+}
+
+var FESTIVOS = ["2025-01-01","2025-02-03","2025-03-17","2025-05-01","2025-09-16","2025-11-17","2025-12-25","2026-01-01","2026-02-02","2026-03-16","2026-05-01","2026-09-16","2026-11-16","2026-12-25"];
+
+var ASIG = {
+  "ACOSTA GÓMEZ, JOSÉ MANUEL":{svc:"Transdien",tc:"M1",h:12},
+  "AGUILAR MONTOYA, EDGAR ADRIÁN":{svc:"Misión De los Lagos",tc:"N2",h:12},
+  "AGUIRRE VÁZQUEZ, URIEL":{svc:"Misión De los Lagos",tc:"M1",h:12},
+  "ALVARADO GÓMEZ, DARÍO":{svc:"Plaza Magnolia",tc:"N2",h:12},
+  "AYALA PIEDRA, JUAN CARLOS":{svc:"Misión De los Lagos",tc:"N2",h:12},
+  "BLANCO PANAMÁ, GUSTAVO":{svc:"Colegio San Patricio (Campus Valle Del Sol)",tc:"M3",h:12},
+  "CABALLERO BARRAZA, IGNACIO JAVIER":{svc:"Plaza Dekoro",tc:"M1",h:12},
+  "CELEDÓN, ISAÍAS":{svc:"M-6",tc:"M2",h:10},
+  "CHÁVEZ LUÉVANO, JUAN JOSÉ":{svc:"Transportes Reyna",tc:"M3",h:12},
+  "CHÁVEZ NAVARRO, CHRISTIAN ALONSO":{svc:"Specialty Bolt",tc:"N3",h:12},
+  "CHÁVEZ PULIDO, JOSÉ ALONSO":{svc:"M-6",tc:"M1",h:12},
+  "CHÁVEZ ZAMORA, LILIBETH":{svc:"Misión De los Lagos",tc:"M1",h:12},
+  "CORRAL SANTANA, MARTÍN UBALDO":{svc:"Misión De los Lagos",tc:"N2",h:12},
+  "DANIEL, JAIME":{svc:"Transdien",tc:"N2",h:12},
+  "GONZÁLEZ ARREGUÍN, CÉSAR":{svc:"Plaza Olivos",tc:"M3",h:12},
+  "LARA ENRÍQUEZ, EMILIO":{svc:"Ofimer",tc:"M2",h:10},
+  "LÁZARO LÁZARO, CÉSAR AUGUSTO":{svc:"Miscelec",tc:"N2",h:12},
+  "LORENZO GÓMEZ, FAUSTINO":{svc:"Miscelec",tc:"M1",h:12},
+  "LOZANO TORRES, JANIS XAVIERA":{svc:"M-6",tc:"M2",h:8},
+  "LÓPEZ OJEDA, RAFAEL":{svc:"Plaza San Andrés",tc:"N2",h:12},
+  "LÓPEZ VALDÉZ, GERARDO":{svc:"M-6",tc:"M1",h:12},
+  "LÓPEZ ZÚÑIGA, BENITO":{svc:"Construmás",tc:"M2",h:9.5},
+  "MARÍN REYES, ANTONIO":{svc:"Colegio San Patricio (Campus Villa Alegre)",tc:"M3",h:12},
+  "MARTÍNEZ SANTELLÁN, ENRIQUE":{svc:"Plaza Patita",tc:"N1",h:15},
+  "MÉNDEZ DE LA CRUZ, ARSELIO":{svc:"Miscelec",tc:"M1",h:12},
+  "MORALES MENDOZA, CELESTINO":{svc:"Colegio San Patricio (Campus Villa Alegre)",tc:"N3",h:12},
+  "MUÑOZ RIVERA, ROBERTO":{svc:"Misión De los Lagos",tc:"N2",h:12},
+  "OLIVAS DURÁN, ARMANDO":{svc:"M-6",tc:"N2",h:12},
+  "OLIVARES QUIÑONEZ, FERNANDO ALEXANDRO":{svc:"Misión De los Lagos",tc:"M1",h:12},
+  "PALACIOS DEL TORO, SALVADOR":{svc:"Plaza Campestre",tc:"N2",h:12},
+  "PEÑA FELICIANO, VÍCTOR":{svc:"Transportes Reyna",tc:"N3",h:12},
+  "PÉREZ RODARTE, MIGUEL ÁNGEL":{svc:"Misión De los Lagos",tc:"M1",h:12},
+  "RAMOS SANTOS, OSCAR FRANCISCO":{svc:"Plaza Olivos",tc:"N3",h:12},
+  "RAMÍREZ, JESÚS":{svc:"",tc:"M1",h:12},
+  "RODRÍGUEZ HERNÁNDEZ, ISIDRO":{svc:"Misión De los Lagos",tc:"N1",h:15},
+  "RODRÍGUEZ MÁRQUEZ, GABRIEL":{svc:"Misión De los Lagos",tc:"N2",h:12},
+  "ROMERO DE LA CRUZ, DANIEL":{svc:"M-6",tc:"M1",h:12},
+  "ROMERO PAYÁN, JOSÉ EDUARDO":{svc:"Misión De los Lagos",tc:"M1",h:12},
+  "RÍOS QUIÑONES, SHEILA PAOLA":{svc:"M-6",tc:"M2",h:8},
+  "VALANDRANO HERNÁNDEZ, FRANCISCO JAVIER":{svc:"Plaza Bistro",tc:"N3",h:12}
+};
+
+var CAT = {
+  "ACOSTA GÓMEZ, JOSÉ MANUEL":{t:53.47,i:359.37,f:0,p:0},
+  "AGUILAR MONTOYA, EDGAR ADRIÁN":{t:55.55,i:0,f:0,p:0},
+  "AGUIRRE VÁZQUEZ, URIEL":{t:55.55,i:301.43,f:0,p:0},
+  "ALVARADO GÓMEZ, DARÍO":{t:54.16,i:0,f:0,p:0},
+  "AYALA PIEDRA, JUAN CARLOS":{t:55.55,i:235.61,f:0,p:0},
+  "BLANCO PANAMÁ, GUSTAVO":{t:54.16,i:404.95,f:0,p:0},
+  "CABALLERO BARRAZA, IGNACIO JAVIER":{t:50,i:0,f:0,p:0},
+  "CELEDÓN, ISAÍAS":{t:74.0,i:0,f:0,p:0,dias:5},
+  "CHÁVEZ LUÉVANO, JUAN JOSÉ":{t:54.16,i:754.52,f:0,p:0},
+  "CHÁVEZ NAVARRO, CHRISTIAN ALONSO":{t:60,i:0,f:0,p:0},
+  "CHÁVEZ PULIDO, JOSÉ ALONSO":{t:69.72,i:0,f:629.82,p:500,dias:5},
+  "CHÁVEZ ZAMORA, LILIBETH":{t:64.75,i:0,f:0,p:0},
+  "CORRAL SANTANA, MARTÍN UBALDO":{t:59.72,i:0,f:0,p:400},
+  "DANIEL, JAIME":{t:53.96,i:0,f:0,p:0},
+  "GONZÁLEZ ARREGUÍN, CÉSAR":{t:52.5,i:0,f:0,p:0},
+  "LARA ENRÍQUEZ, EMILIO":{t:55.26,i:0,f:0,p:0},
+  "LÁZARO LÁZARO, CÉSAR AUGUSTO":{t:50,i:0,f:0,p:0},
+  "LORENZO GÓMEZ, FAUSTINO":{t:51.04,i:683.03,f:0,p:0},
+  "LOZANO TORRES, JANIS XAVIERA":{t:137.5,i:0,f:0,p:0,dias:5,varHoras:true},
+  "LÓPEZ OJEDA, RAFAEL":{t:52.5,i:513.1,f:0,p:0},
+  "LÓPEZ VALDÉZ, GERARDO":{t:55.55,i:136.79,f:0,p:0},
+  "LÓPEZ ZÚÑIGA, BENITO":{t:62.26,i:0,f:0,p:0},
+  "MARÍN REYES, ANTONIO":{t:55.55,i:0,f:206.25,p:1000},
+  "MARTÍNEZ SANTELLÁN, ENRIQUE":{t:55.55,i:169.97,f:0,p:0},
+  "MÉNDEZ DE LA CRUZ, ARSELIO":{t:50,i:0,f:0,p:0},
+  "MORALES MENDOZA, CELESTINO":{t:55.55,i:0,f:0,p:0},
+  "MUÑOZ RIVERA, ROBERTO":{t:55.55,i:0,f:640,p:350},
+  "OLIVAS DURÁN, ARMANDO":{t:55.55,i:0,f:0,p:0},
+  "OLIVARES QUIÑONEZ, FERNANDO ALEXANDRO":{t:55.56,i:0,f:0,p:0,dias:6},
+  "PALACIOS DEL TORO, SALVADOR":{t:53.47,i:0,f:0,p:0},
+  "PEÑA FELICIANO, VÍCTOR":{t:52.5,i:426.61,f:0,p:0},
+  "PÉREZ RODARTE, MIGUEL ÁNGEL":{t:59.72,i:0,f:0,p:0},
+  "RAMOS SANTOS, OSCAR FRANCISCO":{t:51.8,i:0,f:0,p:0},
+  "RAMÍREZ, JESÚS":{t:0,i:0,f:0,p:0},
+  "RODRÍGUEZ HERNÁNDEZ, ISIDRO":{t:0,i:0,f:0,p:0},
+  "RODRÍGUEZ MÁRQUEZ, GABRIEL":{t:55.56,i:0,f:0,p:0,dias:6},
+  "ROMERO DE LA CRUZ, DANIEL":{t:55.55,i:0,f:0,p:0},
+  "ROMERO PAYÁN, JOSÉ EDUARDO":{t:55.56,i:0,f:286.57,p:0,dias:6},
+  "RÍOS QUIÑONES, SHEILA PAOLA":{t:87.51,i:444.32,f:0,p:0,dias:5},
+  "VALANDRANO HERNÁNDEZ, FRANCISCO JAVIER":{t:56.25,i:0,f:0,p:0}
+};
+
+var PUESTOS = {
+  "CELEDÓN, ISAÍAS":"Coordinador de Capital Humano y Operación",
+  "CHÁVEZ PULIDO, JOSÉ ALONSO":"Gerente de Operaciones",
+  "RÍOS QUIÑONES, SHEILA PAOLA":"Auxiliar Contable",
+  "LOZANO TORRES, JANIS XAVIERA":"Gerente Administrativo"
+};
+
+var TLBL = {M1:"07-19",M2:"08-18",M3:"06-18",N1:"17-08",N2:"19-07",N3:"18-06","24":"24h",X:"Custom"};
+var TDEF = {M1:["07:00","19:00"],M2:["08:00","18:00"],M3:["06:00","18:00"],N1:["17:00","08:00"],N2:["19:00","07:00"],N3:["18:00","06:00"],"24":["07:00","07:00"],X:["07:00","19:00"]};
+var THRS = {M1:12,M2:10,M3:12,N1:15,N2:12,N3:12,"24":24,X:12};
+
+// Estado
+var db = {asistencia:[],servicios:[],reclutamiento:[],turnos:[],prestamos:[]};
+var estados = {}, bonos = {}, descsExtra = {}, notasDia = {}, horasReales = {}, cdServicio = {}, cdTurno = {};
+var semOff = 0;
+var repOff = 0;
+var arView = "servicio";
+var dashPeriod = 'dia';
+var dashOff = 0;
+var prestamosActivos = [];
+
+// ══ INIT ══
+document.getElementById('dtag').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// Poblar selects
+(function(){
+  var selects = ['mt-guardia','mp-guardia','np-guardia'];
+  selects.forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = '<option value="">Seleccionar...</option>';
+    PERSONAL.forEach(function(n){ el.innerHTML += '<option value="'+n+'">'+n+'</option>'; });
+  });
+  var ss = document.getElementById('mt-servicio');
+  ss.innerHTML = '<option value="">Seleccionar...</option>';
+  SERVICIOS.forEach(function(s){ ss.innerHTML += '<option value="'+s+'">'+s+'</option>'; });
+  ss.innerHTML += '<option value="__otro__">Otro...</option>';
+  var mgs = document.getElementById('mg-servicio');
+  mgs.innerHTML = '<option value="">Sin asignar</option>';
+  SERVICIOS.forEach(function(s){ mgs.innerHTML += '<option value="'+s+'">'+s+'</option>'; });
+})();
+
+// Cargar préstamos locales
+(function(){
+  try{ var d=localStorage.getItem('cops_prest'); if(d) prestamosActivos=JSON.parse(d); }catch(e){}
+})();
+
+// ══ TABS (event delegation) ══
+document.getElementById('tabs').addEventListener('click', function(e){
+  var btn = e.target.closest('.tab');
+  if(!btn) return;
+  var t = btn.dataset.tab;
+  document.querySelectorAll('.tab').forEach(function(el){ el.classList.toggle('active', el.dataset.tab===t); });
+  document.querySelectorAll('.pane').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('pane-'+t).classList.add('active');
+  if(t==='prenomina') renderNomina();
+  if(t==='asistencia') renderAR();
+  if(t==='historial') renderHist();
+  if(t==='prestamos') renderPrestamos();
+  if(t==='reporte') renderReporte();
+  if(t==='personal'){ renderPersonal(); renderPlantilla(); }
+  if(t==='servicios') renderSvc();
+  if(t==='historial') renderHist();
+  if(t==='reclutamiento') renderRec();
+});
+
+// ── Registro limpio de listeners ──
+function on(id,ev,fn){var el=document.getElementById(id);if(el)el.addEventListener(ev,fn);}
+function registrarListeners(){
+  on('btn-guardar','click',guardarDia);
+  on('btn-todos-presente','click',function(){marcarTodos('Presente');});
+  on('btn-limpiar-todo','click',limpiarTodos);
+  on('ar-fecha','change',renderAR);
+  on('ar-buscar','input',renderGG);
+  on('btn-limp-fil','click',limpFil);
+  on('fil-svc','change',renderSvc);
+  on('btn-nuevo-svc','click',function(){openM('svc');});
+  on('btn-save-svc','click',saveSvc);
+  on('btn-cancel-svc','click',function(){closeM('svc');});
+  on('fil-est','change',renderHist);
+  on('fil-nom','input',renderHist);
+  on('fil-fec','change',renderHist);
+  on('fil-rec','change',renderRec);
+  on('btn-nuevo-cand','click',function(){openM('cand');});
+  on('btn-save-cand','click',saveRec);
+  on('btn-cancel-cand','click',function(){closeM('cand');});
+  on('btn-sem-ant','click',function(){semOff--;renderNomina();});
+  on('btn-sem-sig','click',function(){semOff++;renderNomina();});
+  on('btn-nuevo-turno','click',function(){openM('turno');});
+  on('btn-save-turno','click',saveTurno);
+  on('btn-cancel-turno','click',function(){closeM('turno');});
+  on('btn-nuevo-prest-nom','click',function(){openM('prest');});
+  on('btn-save-prest','click',savePrest);
+  on('btn-cancel-prest','click',function(){closeM('prest');});
+  on('btn-exportar','click',exportNom);
+  on('cfg-extra','input',renderNomina);
+  on('cfg-dom','input',renderNomina);
+  on('cfg-falta','input',renderNomina);
+  on('btn-rep-print','click',function(){window.print();});
+  on('fil-personal','input',renderPersonal);
+  on('fil-turno-personal','change',renderPersonal);
+  on('btn-nuevo-guardia','click',function(){openNuevoGuardia();});
+  on('btn-refresh-plantilla','click',renderPlantilla);
+  on('btn-config-horarios','click',function(){renderHorariosModal();openM('horarios');});
+  on('btn-cancel-horarios','click',function(){closeM('horarios');});
+  on('btn-save-horarios','click',saveHorarios);
+  on('btn-save-guardia','click',saveGuardia);
+  on('btn-cancel-guardia','click',function(){closeM('guardia');});
+  on('mg-semanal','input',calcTarifaHora);
+  on('mg-horas','input',calcTarifaHora);
+  on('mg-dias','input',calcTarifaHora);
+  on('btn-nuevo-prestamo-tab','click',function(){openM('nprest');});
+  on('btn-save-nprest','click',saveNuevoPrestamo);
+  on('btn-cancel-nprest','click',function(){closeM('nprest');});
+  on('np-total','input',calcPagos);
+  on('np-semanal','input',calcPagos);
+  on('btn-save-aj','click',saveAjuste);
+  on('btn-cancel-aj','click',function(){closeM('ajuste');});
+  on('mt-guardia','change',prevTurno);
+  on('mt-turno','change',function(){
+    var t=this.value,em={M1:'07:00',M2:'08:00',M3:'06:00',N1:'17:00',N2:'19:00',N3:'18:00'};
+    var sm={M1:'19:00',M2:'18:00',M3:'18:00',N1:'08:00',N2:'07:00',N3:'06:00'};
+    var ei=document.getElementById('mt-ent'),si=document.getElementById('mt-sal');
+    if(ei&&em[t])ei.value=em[t];if(si&&sm[t])si.value=sm[t];prevTurno();
+  });
+  on('mt-ent','change',prevTurno);
+  on('mt-sal','change',prevTurno);
+  on('mt-tipo','change',prevTurno);
+  document.querySelectorAll('.mo').forEach(function(o){
+    o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open');});
+  });
+}
+registrarListeners();
+
+
+document.addEventListener('change', function(e){
+  if(e.target.classList.contains('hrs-input')){
+    var nombre=e.target.dataset.guardia;
+    var val=parseFloat(e.target.value)||0;
+    if(val>0){ horasReales[nombre]=val; renderResumen(); renderGG(); }
+    return;
+  }
+  if(e.target.classList.contains('cd-svc')){
+    cdServicio[e.target.dataset.guardia]=e.target.value;
+    renderResumen();
+    return;
+  }
+  if(e.target.classList.contains('cd-turno')){
+    cdTurno[e.target.dataset.guardia]=e.target.value;
+    renderResumen();
+    return;
+  }
+});
+document.addEventListener('click', function(e){
+  // Estatus botones asistencia
+  var eb = e.target.closest('[data-estatus]');
+  if(eb){ setE(eb.dataset.nombre, eb.dataset.estatus); return; }
+  // Ajuste button
+  var aj = e.target.closest('[data-ajuste]');
+  if(aj){ openAjuste(aj.dataset.ajuste); return; }
+  // Eliminar fila
+  var del = e.target.closest('[data-del]');
+  if(del){ delRow(del.dataset.del, parseInt(del.dataset.idx)); return; }
+  // Toggle nomina detail
+  var tog = e.target.closest('[data-tog]');
+  if(tog){ var el=document.getElementById(tog.dataset.tog); if(el) el.classList.toggle('open'); return; }
+  // Horas reales input
+  if(e.target.classList.contains('hrs-input')){
+    var nombre=e.target.dataset.guardia;
+    var val=parseFloat(e.target.value)||0;
+    if(val>0){ horasReales[nombre]=val; renderResumen(); }
+    return;
+  }
+  // Nomina nav buttons
+  var snb = e.target.closest('[data-sem-nav]');
+  if(snb){ semOff += parseInt(snb.dataset.semNav); renderNomina(); return; }
+  // Reporte nav buttons
+  var rnb = e.target.closest('[data-rep-nav]');
+  if(rnb){ repOff += parseInt(rnb.dataset.repNav); renderReporte(); return; }
+  // Dashboard nav buttons (anterior/siguiente)
+  var dnb = e.target.closest('[data-dash-nav]');
+  if(dnb){
+    dashOff += parseInt(dnb.dataset.dashNav);
+    // Limit: don't go before Period 1 (Dec 28 2025) or more than 4 periods ahead
+    if(dashPeriod==='semana'&&dashOff<-13) dashOff=-13;
+    if(dashPeriod==='mes'&&dashOff<-3) dashOff=-3;
+    if(dashPeriod==='dia'&&dashOff<-90) dashOff=-90;
+    renderDashboard();
+    return;
+  }
+  // AR view buttons
+  var avb = e.target.closest('.ar-view-btn');
+  if(avb){ setARView(avb.dataset.view); return; }
+  // Dashboard period buttons
+  var dpb = e.target.closest('.dash-period-btn');
+  if(dpb){ setDashPeriod(dpb.dataset.period); return; }
+  // Aplicar descuento prestamo
+  var ap = e.target.closest('[data-aplic]');
+  if(ap){ aplicarDescPrestamo(parseInt(ap.dataset.aplic)); return; }
+  // Ver pagos prestamo
+  var vp = e.target.closest('[data-verpagos]');
+  if(vp){ verPagos(parseInt(vp.dataset.verpagos)); return; }
+  // Editar/eliminar guardia
+  var eg = e.target.closest('[data-edit-guardia]');
+  if(eg){ editGuardia(parseInt(eg.dataset.editGuardia)); return; }
+  var dg2 = e.target.closest('[data-del-guardia]');
+  if(dg2){
+    var dgi=parseInt(dg2.dataset.delGuardia), dgn=PERSONAL[dgi];
+    if(!dgn||!confirm('Eliminar a '+dgn+'?')) return;
+    PERSONAL.splice(dgi,1); delete ASIG[dgn]; delete CAT[dgn]; delete PUESTOS[dgn];
+    savePersonalLocal(); renderPersonal(); renderDashboard(); toast('Guardia eliminado','s');
+  }
+});
+
+// ══ UTILIDADES ══
+function toast(msg,t){ var el=document.getElementById('tst'); el.textContent=msg; el.className='toast on '+(t||''); setTimeout(function(){el.className='toast';},3000); }
+function setDot(s){ document.getElementById('sdot').className='sdot '+(s||''); }
+function hoy(){ return new Date().toISOString().split('T')[0]; }
+
+function getPeriodo(fechaStr){
+  // Use UTC noon to avoid timezone issues
+  var p1 = Date.UTC(2025,11,28,12,0,0); // Dec 28 2025
+  var fs = (fechaStr||hoy()).split('-');
+  var f = Date.UTC(parseInt(fs[0]),parseInt(fs[1])-1,parseInt(fs[2]),12,0,0);
+  var num = Math.floor((f - p1) / (7*24*60*60*1000)) + 1;
+  return num > 0 ? num : 1;
+}
+function ini(n){ return (n||'?').split(' ').slice(0,2).map(function(w){return w[0];}).join('').toUpperCase(); }
+function getcat(n){ return CAT[n]||{t:0,i:0,f:0,p:0}; }
+function getasig(n){ return ASIG[n]||{svc:'',tc:'M1',h:12}; }
+function fmtMXN(v){ return v.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function openM(t){ var d=hoy(); if(t==='turno'){document.getElementById('mt-fecha').value=d;document.getElementById('mt-prev').style.display='none';} if(t==='prest') document.getElementById('mp-fecha').value=d; if(t==='cand') document.getElementById('mc-fecha').value=d; if(t==='nprest') document.getElementById('np-fecha').value=d; document.getElementById('m-'+t).classList.add('open'); }
+function closeM(t){ document.getElementById('m-'+t).classList.remove('open'); }
+
+function badge(e){
+  var m={'Presente':'bG','Falta':'bR','Retardo':'bA','Permiso con Goce':'bB','Permiso sin Goce':'bP','Incapacidad':'bGR','Renuncia':'bDK','Descanso':'bDC','Descanso Trabajado':'bDT','Vacaciones':'bV','Cubierto':'bG','Incompleto':'bA','Sin personal':'bR','Aprobado':'bG','Rechazado':'bR','En proceso':'bA','Candidato':'bB'};
+  return '<span class="badge '+(m[e]||'bB')+'">'+( e||'—')+'</span>';
+}
+
+function esPagado(e){
+  // Descanso = dia libre sin pago. Solo se paga si trabajó.
+  return e==='Presente'||e==='Retardo'||e==='Permiso con Goce'||e==='Descanso Trabajado';
+}
+
+function calcNetoCard(nombre, e){
+  var c=getcat(nombre), a=getasig(nombre);
+  var horas = (c.varHoras && horasReales[nombre]) ? horasReales[nombre] : a.h;
+  var base = c.t * horas;
+  var pago = esPagado(e) ? base : 0;
+  var desc = (e==='Presente'||e==='Retardo'||e==='Descanso'||e==='Descanso Trabajado') ? (c.i+c.f+c.p) : 0;
+  return pago - desc + (bonos[nombre]||0) - (descsExtra[nombre]||0);
+}
+
+// ══ API ══
+function fetchH(hoja,cb){
+  fetch(API+'?hoja='+hoja)
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(data){
+      cb(Array.isArray(data) ? data : []);
+    })
+    .catch(function(e){
+      console.warn('fetchH error:', hoja, e);
+      cb([]);
+    });
+}
+function postH(payload){
+  var url=API+'?data='+encodeURIComponent(JSON.stringify(payload));
+  return fetch(url,{method:'GET',mode:'no-cors'})
+    .then(function(){return new Promise(function(r){setTimeout(r,600);});});
+}
+
+function syncAll(){
+  var btn=document.getElementById('syncbtn');
+  btn.textContent='↻ Cargando...'; btn.style.opacity='.6'; btn.style.pointerEvents='none';
+  setDot('syn');
+  // Clear all data before syncing to prevent stale data
+  db = {asistencia:[],servicios:[],reclutamiento:[],turnos:[],prestamos:[]};
+  var done=0;
+  function check(){ done++; if(done===5){ btn.textContent='↻ Sincronizar'; btn.style.opacity=''; btn.style.pointerEvents=''; setDot(''); // Rebuild bonos/descuentos from Sheets
+      bonos={}; descsExtra={};
+      db.prestamos.forEach(function(p){
+        if(p.tipo==='bono') bonos[p.guardia]=(bonos[p.guardia]||0)+p.monto;
+        else if(p.tipo==='descuento') descsExtra[p.guardia]=(descsExtra[p.guardia]||0)+p.monto;
+      });
+      toast('Datos sincronizados','s'); renderDashboard(); renderGG(); renderHist(); renderSvc(); renderRec();
+
+      }}
+  var fmtF = function(x){ return String(x||'').split('T')[0].split(' ')[0]; };
+  fetchH('Asistencia',function(r){ db.asistencia=r.map(function(x){return{fecha:fmtF(x.Fecha),guardia:x.Guardia,servicio:x.Servicio||'',estatus:x.Estatus,notas:x.Notas||''};});check();});
+  fetchH('Servicios',function(r){ db.servicios=r.map(function(x){return{servicio:x.Servicio,requeridos:Number(x.Requeridos),cubiertos:Number(x.Cubiertos),estatus:x.Estatus};});check();});
+  fetchH('Reclutamiento',function(r){ db.reclutamiento=r.map(function(x){return{candidato:x.Candidato,estatus:x.Estatus,fecha:fmtF(x.Fecha)};});check();});
+  fetchH('Turnos',function(r){ db.turnos=r.map(function(x){return{fecha:fmtF(x.Fecha),guardia:x.Guardia,servicio:x.Servicio,turno:x.Turno,entrada:x.Entrada,salida:x.Salida,tipoDia:x.TipoDia,notas:x.Notas||''};});check();});
+  fetchH('Prestamos',function(r){ db.prestamos=r.map(function(x){return{fecha:fmtF(x.Fecha),guardia:x.Guardia,monto:Number(x.Monto),tipo:x.Tipo,concepto:x.Concepto};});check();});
+}
+
+// ══ DASHBOARD ══
+var pie;
+function renderDashboard(){
+  var h=hoy();
+  var now=new Date(h+'T12:00:00');
+  var hr=[], periodoLbl='', periIni='', periFin='';
+
+  if(dashPeriod==='dia'){
+    var dNav=new Date(now); dNav.setDate(now.getDate()+dashOff);
+    var dStr=dNav.toISOString().split('T')[0];
+    hr=db.asistencia.filter(function(r){return String(r.fecha)===dStr;});
+    periodoLbl=dNav.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    periIni=dStr; periFin=dStr;
+
+  } else if(dashPeriod==='semana'){
+    var wd=now.getDay();
+    var dom=new Date(now); dom.setDate(now.getDate()-wd+(dashOff*7));
+    var sab=new Date(dom); sab.setDate(dom.getDate()+6);
+    periIni=dom.toISOString().split('T')[0];
+    periFin=sab.toISOString().split('T')[0];
+    hr=db.asistencia.filter(function(r){
+      return String(r.fecha)>=periIni&&String(r.fecha)<=periFin;
+    });
+    periodoLbl='Período '+getPeriodo(periIni)+': '+dom.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})+' – '+sab.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+
+  } else if(dashPeriod==='mes'){
+    var mNav=new Date(now.getFullYear(),now.getMonth()+dashOff,1);
+    var mesStr=mNav.getFullYear()+'-'+(mNav.getMonth()<9?'0':'')+(mNav.getMonth()+1);
+    periIni=mesStr+'-01';
+    periFin=mesStr+'-31';
+    hr=db.asistencia.filter(function(r){return String(r.fecha).substring(0,7)===mesStr;});
+    periodoLbl=mNav.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+
+  } else {
+    var anioNav=now.getFullYear()+dashOff;
+    periIni=anioNav+'-01-01'; periFin=anioNav+'-12-31';
+    hr=db.asistencia.filter(function(r){return String(r.fecha).substring(0,4)===String(anioNav);});
+    periodoLbl='Año '+anioNav;
+  }
+
+  document.getElementById('dash-date-lbl').textContent=periodoLbl;
+
+  // ── Counts ──
+  var pre=hr.filter(function(r){return r.estatus==='Presente';}).length;
+  var fal=hr.filter(function(r){return r.estatus==='Falta';}).length;
+  var ret=hr.filter(function(r){return r.estatus==='Retardo';}).length;
+  var dsc=hr.filter(function(r){return r.estatus==='Descanso';}).length;
+  var dt=hr.filter(function(r){return r.estatus==='Descanso Trabajado';}).length;
+  var inc=hr.filter(function(r){return r.estatus==='Incapacidad';}).length;
+  var pg=hr.filter(function(r){return r.estatus==='Permiso con Goce';}).length;
+  var ps=hr.filter(function(r){return r.estatus==='Permiso sin Goce';}).length;
+  var tot=hr.length||1;
+  var sreg=dashPeriod==='dia'?Math.max(0,PERSONAL.length-hr.length):inc+ps;
+
+  // Build guardiaEstatus map
+  var guardiaEstatus={};
+  hr.forEach(function(r){
+    if(!guardiaEstatus[r.guardia]) guardiaEstatus[r.guardia]={};
+    if(!guardiaEstatus[r.guardia][r.fecha]) guardiaEstatus[r.guardia][r.fecha]=r.estatus;
+  });
+
+  var totalPersonal=PERSONAL.length;
+  var guardiasPresentes=PERSONAL.filter(function(g){
+    return guardiaEstatus[g]&&Object.values(guardiaEstatus[g]).some(function(e){
+      return e==='Presente'||e==='Retardo'||e==='Descanso Trabajado';
+    });
+  }).length;
+  var pctReal=guardiasPresentes>0?Math.round(guardiasPresentes/totalPersonal*100):0;
+
+  var guardiasConFalta=PERSONAL.filter(function(g){
+    return guardiaEstatus[g]&&Object.values(guardiaEstatus[g]).some(function(e){return e==='Falta';});
+  }).length;
+
+  // ── KPIs ──
+  document.getElementById('k-tot').textContent=totalPersonal;
+  document.getElementById('k-pre').textContent=guardiasPresentes>0?pctReal+'%':'—';
+  document.getElementById('k-prep').textContent=guardiasPresentes>0?(guardiasPresentes+' de '+totalPersonal+' guardias'):'Sin registros';
+  document.getElementById('k-fal').textContent=guardiasConFalta||'—';
+  document.getElementById('k-falp').textContent=fal+' registros de falta';
+  document.getElementById('k-ret').textContent=ret||'—';
+  document.getElementById('k-retp').textContent=ret?Math.round(ret/tot*100)+'% del total':'0% del total';
+  document.getElementById('k-sreg').textContent=sreg||'—';
+  document.getElementById('k-sreg-sub').textContent=dashPeriod==='dia'?'sin registrar':'incap.+permisos s/g';
+
+  // ── Coverage ──
+  var clientSvcs=SERVICIOS.filter(function(s){return s!==''&&s!==OFICINA_SVC;});
+  var cov={};
+  clientSvcs.forEach(function(s){cov[s]={tot:0,pre:0,fal:0,_ausG:{},_presG:{}};});
+  cov[OFICINA_SVC]={tot:0,pre:0,fal:0,_ausG:{},_presG:{}};
+
+  PERSONAL.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;}).forEach(function(n){
+    var a=getasig(n);
+    if(a.svc&&cov[a.svc]) cov[a.svc].tot++;
+  });
+
+  // Build a set of who is assigned to each service (excluding CD)
+  var asigSvc={};
+  PERSONAL.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;}).forEach(function(n){
+    var s=getasig(n).svc;
+    if(s){ if(!asigSvc[s]) asigSvc[s]={}; asigSvc[s][n]=true; }
+  });
+
+  hr.forEach(function(r){
+    if(!r.servicio||!cov[r.servicio]) return;
+    var e=r.estatus, s=r.servicio, g=r.guardia;
+    // Only count if this guardia is actually assigned to this service (not CD covering)
+    var esAsignado=asigSvc[s]&&asigSvc[s][g];
+    if(!esAsignado) return;
+    if(e==='Presente'||e==='Retardo'||e==='Descanso Trabajado'){
+      cov[s]._presG[g]=true;
+      cov[s].pre=Object.keys(cov[s]._presG).length;
+    }
+    if(e==='Falta'||e==='Incapacidad'||e==='Permiso sin Goce'){
+      cov[s]._ausG[g]=true;
+      cov[s].fal=Object.keys(cov[s]._ausG).length;
+    }
+  });
+
+  var svcAfect=clientSvcs.filter(function(s){return cov[s]&&cov[s].tot>0&&cov[s].pre<cov[s].tot&&cov[s].fal>0;}).length;
+  document.getElementById('k-svc').textContent=clientSvcs.length;
+  document.getElementById('k-svcr').textContent=svcAfect||'0';
+
+  // ── Pie chart ──
+  var pieLabels=['Presente','Falta','Retardo','Permiso c/G','Permiso s/G','Incapacidad','Descanso','Desc.Trab.','Sin reg.'];
+  var pieData=[pre,fal,ret,pg,ps,inc,dsc,dt,sreg];
+  var pieColors=['#1D9E75','#c0392b','#EF9F27','#185FA5','#6246d6','#888','#aaa','#e67e22','#e2e4e9'];
+  var fl=[],fd=[],fc=[];
+  pieLabels.forEach(function(l,i){if(pieData[i]>0){fl.push(l);fd.push(pieData[i]);fc.push(pieColors[i]);}});
+  var ctxP=document.getElementById('chartPie').getContext('2d');
+  if(pie) pie.destroy();
+  pie=new Chart(ctxP,{type:'doughnut',data:{labels:fl,datasets:[{data:fd,backgroundColor:fc,borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+c.raw;}}}}}});
+  var legHtml='';
+  fl.forEach(function(l,i){legHtml+='<span style="display:flex;align-items:center;gap:3px"><span style="width:9px;height:9px;border-radius:2px;background:'+fc[i]+';display:inline-block;flex-shrink:0"></span>'+l+' ('+fd[i]+')</span>';});
+  document.getElementById('dash-legend').innerHTML=legHtml;
+
+  // ── Trend chart ──
+  var trend=[];
+  if(dashPeriod==='dia'||dashPeriod==='semana'){
+    var domT=new Date(now); domT.setDate(now.getDate()-now.getDay()+(dashOff*7));
+    for(var di=0;di<7;di++){
+      var td=new Date(domT); td.setDate(domT.getDate()+di);
+      var tds=td.toISOString().split('T')[0];
+      var thr=db.asistencia.filter(function(r){return String(r.fecha)===tds;});
+      trend.push({
+        lbl:['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][td.getDay()]+' '+td.getDate(),
+        pre:thr.filter(function(r){return r.estatus==='Presente'||r.estatus==='Retardo'||r.estatus==='Descanso Trabajado';}).length,
+        fal:thr.filter(function(r){return r.estatus==='Falta'||r.estatus==='Incapacidad'||r.estatus==='Permiso sin Goce';}).length
+      });
+    }
+  } else if(dashPeriod==='mes'){
+    for(var pi=0;pi<52;pi++){
+      var ws=new Date('2025-12-28T12:00:00'); ws.setDate(ws.getDate()+(pi*7));
+      var wsi=ws.toISOString().split('T')[0];
+      if(wsi>=periIni&&wsi<=periFin){
+        var we=new Date(ws); we.setDate(ws.getDate()+6);
+        var wei=we.toISOString().split('T')[0];
+        var thrW=db.asistencia.filter(function(r){return String(r.fecha)>=wsi&&String(r.fecha)<=wei;});
+        trend.push({
+          lbl:'P'+getPeriodo(wsi),
+          pre:thrW.filter(function(r){return r.estatus==='Presente'||r.estatus==='Retardo'||r.estatus==='Descanso Trabajado';}).length,
+          fal:thrW.filter(function(r){return r.estatus==='Falta'||r.estatus==='Incapacidad'||r.estatus==='Permiso sin Goce';}).length
+        });
+      }
+    }
+  } else {
+    var anioN=now.getFullYear()+dashOff;
+    for(var mi=0;mi<12;mi++){
+      var ms=(anioN+'-'+(mi<9?'0':'')+(mi+1));
+      var thrM=db.asistencia.filter(function(r){return String(r.fecha).substring(0,7)===ms;});
+      trend.push({
+        lbl:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][mi],
+        pre:thrM.filter(function(r){return r.estatus==='Presente'||r.estatus==='Retardo'||r.estatus==='Descanso Trabajado';}).length,
+        fal:thrM.filter(function(r){return r.estatus==='Falta'||r.estatus==='Incapacidad'||r.estatus==='Permiso sin Goce';}).length
+      });
+    }
+  }
+
+  var trendTitles={'dia':'Tendencia — 7 días','semana':'Días de la semana','mes':'Períodos del mes','anio':'Tendencia mensual'};
+  document.getElementById('dash-trend-title').textContent=trendTitles[dashPeriod]||'Tendencia';
+  var trendEl=document.getElementById('chartTrend');
+  if(trendEl){
+    var ctxT=trendEl.getContext('2d');
+    if(window._chartTrend) window._chartTrend.destroy();
+    window._chartTrend=new Chart(ctxT,{type:'line',data:{labels:trend.map(function(t){return t.lbl;}),datasets:[
+      {label:'Presentes',data:trend.map(function(t){return t.pre;}),borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.1)',tension:0.4,fill:true,pointRadius:4},
+      {label:'Ausencias',data:trend.map(function(t){return t.fal;}),borderColor:'#c0392b',backgroundColor:'rgba(192,57,43,0.08)',tension:0.4,fill:true,pointRadius:4}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  }
+
+  // ── Afectacion chart ──
+  var statG={'Falta':{},'Incapacidad':{},'Permiso sin Goce':{},'Descanso':{}};
+  hr.forEach(function(r){
+    if(!r.servicio||!cov[r.servicio]) return;
+    // Only count if guardia is assigned to this service
+    var esAsig=asigSvc[r.servicio]&&asigSvc[r.servicio][r.guardia];
+    if(!esAsig) return;
+    if(statG[r.estatus]!==undefined){
+      if(!statG[r.estatus][r.servicio]) statG[r.estatus][r.servicio]={};
+      statG[r.estatus][r.servicio][r.guardia]=true;
+    }
+  });
+  // Exclude oficina from service table - it's shown separately in cobertura
+  var afSvcs=SERVICIOS.filter(function(s){return s!==OFICINA_SVC&&cov[s]&&cov[s].tot>0;});
+  var afLabels=afSvcs.map(function(s){return s.length>16?s.substring(0,15)+'…':s;});
+  var afPre=afSvcs.map(function(s){return cov[s].pre;});
+  var afFal=afSvcs.map(function(s){return statG['Falta'][s]?Object.keys(statG['Falta'][s]).length:0;});
+  var afInc=afSvcs.map(function(s){return statG['Incapacidad'][s]?Object.keys(statG['Incapacidad'][s]).length:0;});
+  var afPS=afSvcs.map(function(s){return statG['Permiso sin Goce'][s]?Object.keys(statG['Permiso sin Goce'][s]).length:0;});
+  var afDsc=afSvcs.map(function(s){return statG['Descanso'][s]?Object.keys(statG['Descanso'][s]).length:0;});
+
+  // Afectacion tabla
+  var afectEl=document.getElementById('afect-tabla');
+  if(afectEl){
+    var totalPresentes=afPre.reduce(function(a,b){return a+b;},0);
+    var totalFaltas=afFal.reduce(function(a,b){return a+b;},0);
+    var totalInc=afInc.reduce(function(a,b){return a+b;},0);
+    var totalPS=afPS.reduce(function(a,b){return a+b;},0);
+    var totalDsc=afDsc.reduce(function(a,b){return a+b;},0);
+
+    function cellVal(v, col){
+      if(v===0) return '<td style="text-align:center;color:#ccc;font-size:13px;padding:7px 10px">—</td>';
+      return '<td style="text-align:center;font-weight:600;font-size:13px;padding:7px 10px;color:'+col+'">'+v+'</td>';
+    }
+
+    var thead='<thead><tr style="background:#185FA5">'
+      +'<th style="text-align:left;padding:8px 12px;color:#fff;font-size:12px;white-space:nowrap">Servicio</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#fff;font-size:12px">Asignados</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#90EE90;font-size:12px">✓ Presentes</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#ffaaaa;font-size:12px">✗ Faltas</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#dddddd;font-size:12px">⚕ Incap.</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#ccbbff;font-size:12px">PS Perm.s/G</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#dddddd;font-size:12px">D Descanso</th>'
+      +'<th style="text-align:center;padding:8px 10px;color:#fff;font-size:12px">Cobertura</th>'
+      +'</tr></thead>';
+
+    var tbody='<tbody>';
+    afSvcs.forEach(function(s,i){
+      var tot=cov[s]?cov[s].tot:0;
+      var pr=afPre[i], fa=afFal[i], ic=afInc[i], ps2=afPS[i], ds=afDsc[i];
+      var pct=tot>0?Math.round(pr/tot*100):0;
+      var rowBg=i%2===0?'#ffffff':'#f9fafb';
+      var hasProblem=fa>0||ic>0||ps2>0;
+      if(hasProblem) rowBg=fa>0?'#fff8f8':ic>0?'#f8f8f8':'#fdf8ff';
+      var covCol=pct===100?'#1D9E75':pct===0?'#c0392b':'#d48806';
+      var covBadge=pct===100?'✓ Cubierto':pct===0?'✗ Sin cobertura':'⚠ '+pct+'%';
+      tbody+='<tr style="background:'+rowBg+';border-bottom:1px solid #f0f1f3">'
+        +'<td style="padding:7px 12px;font-size:12px;font-weight:500;white-space:nowrap">'+s+'</td>'
+        +'<td style="text-align:center;padding:7px 10px;font-size:12px;color:#888">'+tot+'</td>'
+        +cellVal(pr,'#1D9E75')
+        +cellVal(fa,'#c0392b')
+        +cellVal(ic,'#888')
+        +cellVal(ps2,'#6246d6')
+        +cellVal(ds,'#aaa')
+        +'<td style="text-align:center;padding:7px 10px;font-size:11px;font-weight:600;color:'+covCol+'">'+covBadge+'</td>'
+        +'</tr>';
+    });
+
+    // Totals row
+    tbody+='<tr style="background:#f0f4f8;font-weight:700;border-top:2px solid #185FA5">'
+      +'<td style="padding:8px 12px;font-size:12px">TOTAL</td>'
+      +'<td style="text-align:center;padding:8px 10px;font-size:12px"></td>'
+      +'<td style="text-align:center;padding:8px 10px;font-size:13px;color:#1D9E75">'+totalPresentes+'</td>'
+      +'<td style="text-align:center;padding:8px 10px;font-size:13px;color:'+(totalFaltas>0?'#c0392b':'#ccc')+'">'+( totalFaltas||'—')+'</td>'
+      +'<td style="text-align:center;padding:8px 10px;font-size:13px;color:'+(totalInc>0?'#888':'#ccc')+'">'+( totalInc||'—')+'</td>'
+      +'<td style="text-align:center;padding:8px 10px;font-size:13px;color:'+(totalPS>0?'#6246d6':'#ccc')+'">'+( totalPS||'—')+'</td>'
+      +'<td style="text-align:center;padding:8px 10px;font-size:13px;color:#aaa">'+( totalDsc||'—')+'</td>'
+      +'<td></td>'
+      +'</tr></tbody>';
+
+    afectEl.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12px">'+thead+tbody+'</table>';
+  }
+
+  // ── Cobertura list ──
+  var svcHtml='';
+  clientSvcs.forEach(function(s){
+    var c=cov[s]; if(!c||!c.tot) return;
+    var pct=Math.min(100,Math.round(c.pre/c.tot*100));
+    var col=c.pre>=c.tot?'#1D9E75':c.pre===0?'#c0392b':'#EF9F27';
+    var badge=c.pre>=c.tot?'<span style="font-size:10px;color:#1D9E75;font-weight:600">✓</span>':c.pre===0?'<span style="font-size:10px;color:#c0392b;font-weight:600">✗</span>':'<span style="font-size:10px;color:#d48806;font-weight:600">⚠</span>';
+    svcHtml+='<div style="display:flex;align-items:center;padding:5px 0;border-bottom:1px solid #f0f1f3;gap:8px">'
+      +'<div style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s+'</div>'
+      +'<div style="display:flex;align-items:center;gap:5px;flex-shrink:0">'
+      +'<div style="width:60px;background:#eef0f3;border-radius:999px;height:5px"><div style="height:5px;border-radius:999px;width:'+pct+'%;background:'+col+'"></div></div>'
+      +'<span style="font-size:11px;color:#888;min-width:26px;text-align:right">'+c.pre+'/'+c.tot+'</span>'
+      +badge+'</div></div>';
+  });
+  var covOf=cov[OFICINA_SVC]||{tot:0,pre:0};
+  var ofHtml='';
+  if(covOf.tot>0){
+    var pctOf=Math.min(100,Math.round(covOf.pre/covOf.tot*100));
+    var colOf=covOf.pre>=covOf.tot?'#1D9E75':covOf.pre===0?'#c0392b':'#EF9F27';
+    ofHtml='<div style="background:#f0f6ff;border-radius:8px;padding:8px 12px;margin-bottom:10px;border:1px solid #d0e4f7">'
+      +'<div style="font-size:11px;font-weight:600;color:#185FA5;margin-bottom:5px;text-transform:uppercase">🏢 Oficina COPS</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="font-size:12px;flex:1">M-6 — Administrativo</div>'
+      +'<div style="display:flex;align-items:center;gap:5px;flex-shrink:0">'
+      +'<div style="width:60px;background:#eef0f3;border-radius:999px;height:5px"><div style="height:5px;border-radius:999px;width:'+pctOf+'%;background:'+colOf+'"></div></div>'
+      +'<span style="font-size:11px;color:#888;min-width:26px;text-align:right">'+covOf.pre+'/'+covOf.tot+'</span>'
+      +(covOf.pre>=covOf.tot?'<span style="font-size:10px;color:#1D9E75;font-weight:600">✓</span>':'<span style="font-size:10px;color:#d48806;font-weight:600">⚠</span>')
+      +'</div></div></div>';
+  }
+  var svcListEl=document.getElementById('svc-list');
+  if(svcListEl) svcListEl.innerHTML=ofHtml+(svcHtml?'<div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">📍 Servicios clientes</div>'+svcHtml:'<div class="empty">Sin datos de cobertura</div>');
+
+  // ── Últimos registros ──
+  var recent=db.asistencia.slice().sort(function(a,b){return String(b.fecha).localeCompare(String(a.fecha));}).slice(0,10);
+  var tblRows=recent.map(function(r){
+    return '<tr><td><div class="nc"><div class="av">'+ini(r.guardia)+'</div>'+r.guardia+'</div></td><td style="color:#666">'+(r.servicio||'—')+'</td><td>'+badge(r.estatus)+'</td><td style="color:#888">'+r.fecha+'</td></tr>';
+  }).join('');
+  var dtbl=document.getElementById('dash-tbl');
+  if(dtbl) dtbl.innerHTML=tblRows||'<tr><td colspan="4" class="empty">Sin registros — sincroniza primero</td></tr>';
+}
+
+
+function setDashPeriod(p){
+  dashPeriod = p;
+  dashOff = 0;
+  document.querySelectorAll('.dash-period-btn').forEach(function(b){
+    b.classList.toggle('active-view', b.dataset.period===p);
+  });
+  renderDashboard();
+}
+
+function setARView(v){
+  arView = v;
+  document.querySelectorAll('.ar-view-btn').forEach(function(b){
+    b.classList.toggle('active-view', b.dataset.view===v);
+  });
+  renderGG();
+}
+
+function renderAR(){
+  var fi=document.getElementById('ar-fecha');
+  if(!fi.value) fi.value=hoy();
+  var f=fi.value;
+  if(fi.dataset.last!==f){ estados={}; bonos={}; descsExtra={}; notasDia={}; horasReales={}; cdServicio={}; cdTurno={}; fi.dataset.last=f; }
+  var d=new Date(f+'T12:00:00');
+  document.getElementById('ar-lbl').textContent=d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'  —  Período '+getPeriodo(f);
+  var reg=db.asistencia.filter(function(r){return String(r.fecha)===f;});
+  reg.forEach(function(r){ if(!estados[r.guardia]) estados[r.guardia]=r.estatus; if(r.notas&&!notasDia[r.guardia]) notasDia[r.guardia]=r.notas; });
+  renderGG();
+  renderResumen();
+}
+
+function renderGG(){
+  var busq=document.getElementById('ar-buscar').value.toLowerCase();
+  var f=document.getElementById('ar-fecha').value||hoy();
+  var lista=busq?PERSONAL.filter(function(n){return n.toLowerCase().includes(busq);}):PERSONAL;
+  var reg=db.asistencia.filter(function(r){return String(r.fecha)===f;});
+  var yaReg={};
+  reg.forEach(function(r){yaReg[r.guardia]=true;});
+
+  function buildCDExtra(nombre){
+    var svcOpts='<option value="">-- Servicio --</option>';
+    SERVICIOS.forEach(function(s){
+      var sel=cdServicio[nombre]===s?'selected':'';
+      svcOpts+='<option value="'+s+'" '+sel+'>'+s+'</option>';
+    });
+    var turnoOpts='';
+    var turnos=[
+      {v:'M1',l:'M1 07-19 (12h)'},{v:'M2',l:'M2 08-18 (10h)'},{v:'M3',l:'M3 06-18 (12h)'},
+      {v:'N1',l:'N1 17-08 (15h)'},{v:'N2',l:'N2 19-07 (12h)'},{v:'N3',l:'N3 18-06 (12h)'},
+      {v:'24',l:'24 horas'},{v:'X',l:'Personalizado'}
+    ];
+    turnos.forEach(function(t){
+      var sel=cdTurno[nombre]===t.v?'selected':'';
+      turnoOpts+='<option value="'+t.v+'" '+sel+'>'+t.l+'</option>';
+    });
+    return '<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">'
+      +'<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 6px;border-radius:10px;font-weight:600">🔄 Cubre</span>'
+      +'<select class="cd-svc" data-guardia="'+nombre+'" style="font-size:10px;padding:2px 4px;border-radius:5px;border:1px solid #e2e4e9;max-width:140px">'+svcOpts+'</select>'
+      +'<select class="cd-turno" data-guardia="'+nombre+'" style="font-size:10px;padding:2px 4px;border-radius:5px;border:1px solid #e2e4e9;max-width:100px">'+turnoOpts+'</select>'
+      +'</div>';
+  }
+
+  function buildCard(nombre){
+    var e=estados[nombre]||'';
+    var cc='e'+e.replace(/ /g,'');
+    var a=getasig(nombre), c=getcat(nombre);
+    var neto=calcNetoCard(nombre,e);
+    var tl=TLBL[a.tc]||a.tc;
+    var ESTATUSLIST = ['Presente','Falta','Retardo','Permiso con Goce','Permiso sin Goce','Incapacidad','Renuncia','Descanso','Descanso Trabajado','Vacaciones'];
+    var EKEYS = ['eP','eF','eR','ePG','ePS','eIN','eRN','eDC','eDT','eV'];
+    var ESHORT = ['A','F','R','PG','PS','INC','REN','DSC','DT','V'];
+    var colN = e==='Presente'?'#1D9E75':e==='Falta'?'#c0392b':e==='Retardo'?'#d48806':e==='Permiso con Goce'?'#185FA5':e==='Permiso sin Goce'?'#6246d6':e==='Incapacidad'?'#888':e==='Renuncia'?'#1a1a1a':e==='Descanso'?'#0F6E56':e==='Descanso Trabajado'?'#e67e22':'#aaa';
+    var btns='';
+    for(var i=0;i<ESTATUSLIST.length;i++){
+      btns+='<button class="estbtn '+EKEYS[i]+(e===ESTATUSLIST[i]?' on':'')+'" data-nombre="'+nombre+'" data-estatus="'+ESTATUSLIST[i]+'" title="'+ESTATUSLIST[i]+'">'+ESHORT[i]+'</button>';
+    }
+    var infoLine='';
+    if(c.t>0){
+      infoLine='<div style="font-size:11px;margin-top:3px"><span style="color:'+colN+';font-weight:600">'+(e?'$'+fmtMXN(neto):'—')+'</span> <span style="color:#aaa">$'+c.t+'/h</span>';
+      var desc=c.i+c.f+c.p;
+      if(desc>0&&esPagado(e)&&e!=='Permiso con Goce') infoLine+=' <span style="color:#c0392b">desc:-$'+desc.toFixed(2)+'</span>';
+      if(bonos[nombre]>0) infoLine+=' <span style="color:#1D9E75">bono:+$'+bonos[nombre].toFixed(2)+'</span>';
+      if(descsExtra[nombre]>0) infoLine+=' <span style="color:#c0392b">extra:-$'+descsExtra[nombre].toFixed(2)+'</span>';
+      infoLine+='</div>';
+    } else { infoLine='<div style="font-size:11px;color:#d48806">⚠ tarifa no registrada</div>'; }
+    return '<div class="gc '+cc+'">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-weight:500;font-size:13px;margin-bottom:1px">'+nombre+'</div>'
+      +(PUESTOS[nombre]?'<div style="font-size:10px;color:#185FA5;font-weight:500">'+PUESTOS[nombre]+'</div>':'')
+      +(CUBRE_DESCANSOS.indexOf(nombre)>=0?buildCDExtra(nombre):'')
+      +'<div style="font-size:11px;color:#888">'+(CUBRE_DESCANSOS.indexOf(nombre)>=0&&cdServicio[nombre]?cdServicio[nombre]:(a.svc||'Sin asignar'))+(CUBRE_DESCANSOS.indexOf(nombre)>=0&&cdTurno[nombre]?' · '+cdTurno[nombre]:' · '+tl+' ('+a.h+'h)')+'</div>'
+      +infoLine
+      +(notasDia[nombre]?'<div style="font-size:11px;color:#185FA5;margin-top:2px;font-style:italic">📝 '+notasDia[nombre]+'</div>':'')
+      +(yaReg[nombre]?'<span style="font-size:10px;color:#1D9E75">✓ guardado</span>':'')
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+      +'<div class="eb">'+btns+'</div>'
+      +(c.varHoras?'<div style="display:flex;align-items:center;gap:4px;margin-top:4px"><span style="font-size:10px;color:#888">Hrs:</span><input type="number" class="hrs-input" data-guardia="'+nombre+'" value="'+(horasReales[nombre]||a.h)+'" min="1" max="24" step="0.5" style="width:52px;font-size:11px;padding:2px 5px;border:1px solid #e2e4e9;border-radius:5px;text-align:center"></div>':'')
+      +'<button class="ajbtn" data-ajuste="'+nombre+'">+ ajuste</button>'
+      +'</div></div>';
+  }
+
+  function seccion(titulo, color, lista2){
+    if(!lista2.length) return '';
+    return '<div class="shdr" style="color:'+color+';border-bottom-color:'+color+'">'+titulo+' <span style="font-weight:400;color:#888">('+lista2.length+')</span></div>'
+      +'<div class="gg" style="margin-bottom:20px">'+lista2.map(buildCard).join('')+'</div>';
+  }
+
+  var diurnos=lista.filter(function(n){return ['M1','M2','M3'].indexOf(getasig(n).tc)>=0;});
+  var nocturnos=lista.filter(function(n){return ['N1','N2','N3','24'].indexOf(getasig(n).tc)>=0;});
+  var sinTurno=lista.filter(function(n){return ['M1','M2','M3','N1','N2','N3','24'].indexOf(getasig(n).tc)<0;});
+
+  var html='';
+  if(busq){
+    html='<div class="gg">'+lista.map(buildCard).join('')+'</div>';
+  } else if(arView==='alfa'){
+    var sorted=lista.slice().sort(function(a,b){return a.localeCompare(b,'es');});
+    html='<div class="gg">'+sorted.map(buildCard).join('')+'</div>';
+  } else if(arView==='servicio'){
+    // Separate cubre descansos first
+    var cubreList=lista.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)>=0;});
+    var regularList=lista.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;});
+    // Group regular by service
+    var svcGroups={};
+    regularList.forEach(function(n){
+      var s=getasig(n).svc||'Sin asignar';
+      if(!svcGroups[s]) svcGroups[s]=[];
+      svcGroups[s].push(n);
+    });
+    var svcKeys=Object.keys(svcGroups).sort(function(a,b){return a.localeCompare(b,'es');});
+    svcKeys.forEach(function(s){
+      html+=seccion('📍 '+s,'#185FA5',svcGroups[s]);
+    });
+    if(cubreList.length){
+      html+=seccion('🔄 Cubre Descansos','#e67e22',cubreList);
+    }
+  } else {
+    var diurnosSinCD=diurnos.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;});
+    var nocturnosSinCD=nocturnos.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;});
+    var cdList=lista.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)>=0;});
+    html+=seccion('☀ Turno Diurno','#185FA5',diurnosSinCD);
+    html+=seccion('🌙 Turno Nocturno','#6246d6',nocturnosSinCD);
+    if(cdList.length) html+=seccion('🔄 Cubre Descansos','#e67e22',cdList);
+    if(sinTurno.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;}).length) html+=seccion('Sin turno asignado','#888',sinTurno.filter(function(n){return CUBRE_DESCANSOS.indexOf(n)<0;}));
+  }
+  document.getElementById('gg-container').innerHTML=html;
+}
+
+function setE(nombre, e){
+  estados[nombre]=e;
+  renderGG();
+  renderResumen();
+}
+
+function openAjuste(nombre){
+  document.getElementById('aj-nom').value=nombre;
+  document.getElementById('aj-lbl').textContent=nombre;
+  document.getElementById('aj-bono').value=bonos[nombre]||0;
+  document.getElementById('aj-desc').value=descsExtra[nombre]||0;
+  document.getElementById('aj-nota').value=notasDia[nombre]||'';
+  openM('ajuste');
+}
+
+function saveAjuste(){
+  var n=document.getElementById('aj-nom').value;
+  var bono=parseFloat(document.getElementById('aj-bono').value)||0;
+  var desc=parseFloat(document.getElementById('aj-desc').value)||0;
+  var nota=document.getElementById('aj-nota').value.trim();
+  var f=document.getElementById('ar-fecha').value||hoy();
+  bonos[n]=bono; descsExtra[n]=desc; if(nota) notasDia[n]=nota;
+  var saves=[];
+  if(bono>0){
+    var cb={fecha:f,guardia:n,monto:bono,tipo:'bono',concepto:'Bono'+(nota?' - '+nota:'')};
+    saves.push(postH({hoja:'Prestamos',accion:'agregar',fila:[cb.fecha,cb.guardia,cb.monto,cb.tipo,cb.concepto]}));
+    db.prestamos.push(cb);
+  }
+  if(desc>0){
+    var cd={fecha:f,guardia:n,monto:desc,tipo:'descuento',concepto:'Descuento'+(nota?' - '+nota:'')};
+    saves.push(postH({hoja:'Prestamos',accion:'agregar',fila:[cd.fecha,cd.guardia,cd.monto,cd.tipo,cd.concepto]}));
+    db.prestamos.push(cd);
+  }
+  if(saves.length){
+    Promise.all(saves).then(function(){renderNomina();renderGG();renderResumen();toast('Ajuste guardado en Sheets','s');});
+  } else {
+    if(nota) toast('Nota guardada','s');
+    else toast('Sin cambios','s');
+    renderGG(); renderResumen();
+  }
+  closeM('ajuste');
+}
+
+function marcarTodos(e){
+  PERSONAL.forEach(function(n){estados[n]=e;});
+  renderGG(); renderResumen();
+}
+
+function limpiarTodos(){
+  if(!confirm('¿Limpiar todos los estatus del día? Solo se borran de la pantalla, no de Google Sheets.')) return;
+  estados={}; bonos={}; descsExtra={}; notasDia={}; horasReales={};
+  renderGG(); renderResumen();
+}
+
+function renderResumen(){
+  var counts={Presente:0,Falta:0,Retardo:0,'Permiso con Goce':0,'Permiso sin Goce':0,Incapacidad:0,Renuncia:0,Descanso:0,'Descanso Trabajado':0};
+  var totalPago=0;
+  PERSONAL.forEach(function(n){
+    var e=estados[n]||'';
+    if(counts[e]!==undefined) counts[e]++;
+    if(esPagado(e)) totalPago+=calcNetoCard(n,e);
+    // Descanso no suma al pago
+  });
+  var sin=PERSONAL.filter(function(n){return !estados[n];}).length;
+  var COLS={Presente:'#1D9E75',Falta:'#c0392b',Retardo:'#d48806','Permiso con Goce':'#185FA5','Permiso sin Goce':'#6246d6',Incapacidad:'#888',Renuncia:'#1a1a1a',Descanso:'#0F6E56','Descanso Trabajado':'#e67e22'};
+  var LBSS={Presente:'Presentes',Falta:'Faltas',Retardo:'Retardos','Permiso con Goce':'P.c/Goce','Permiso sin Goce':'P.s/Goce',Incapacidad:'Incapacidad',Renuncia:'Renuncia',Descanso:'Descanso','Descanso Trabajado':'Desc.Trab.'};
+  var html='';
+  Object.keys(counts).forEach(function(k){ if(counts[k]>0) html+='<div class="rbi"><span style="width:10px;height:10px;border-radius:50%;background:'+COLS[k]+';display:inline-block"></span><strong>'+counts[k]+'</strong> '+LBSS[k]+'</div>'; });
+  html+='<div class="rbi"><span style="width:10px;height:10px;border-radius:50%;background:#e2e4e9;display:inline-block"></span><strong>'+sin+'</strong> Sin registrar</div>';
+  if(totalPago>0) html+='<div class="rbi" style="background:#f0faf5;border-color:#1D9E75"><span style="color:#1D9E75;font-weight:700">$'+fmtMXN(totalPago)+'</span> pago estimado</div>';
+  document.getElementById('ar-resumen').innerHTML=html;
+}
+
+function guardarDia(){
+  var f=document.getElementById('ar-fecha').value||hoy();
+  var lista=PERSONAL.filter(function(n){return estados[n];});
+  if(!lista.length){toast('Marca la asistencia primero','e');return;}
+  var btn=document.getElementById('btn-guardar');
+  if(btn.disabled) return; // Prevent double-click
+  btn.textContent='Guardando...'; btn.disabled=true;
+  var reg=db.asistencia.filter(function(r){return String(r.fecha)===f;});
+  var yaReg={}; reg.forEach(function(r){yaReg[r.guardia]=true;});
+  var cola=lista.filter(function(n){return !yaReg[n];});
+  if(!cola.length){toast('Ya están guardados','s');btn.textContent='↑ Guardar día';btn.disabled=false;return;}
+  var i=0;
+  var guardados=0;
+  function sig(){
+    if(i>=cola.length){
+      btn.textContent='↑ Guardar día';
+      btn.disabled=false;
+      if(guardados>0){
+        toast(guardados+' registros guardados','s');
+        renderDashboard();renderGG();
+        setTimeout(function(){renderNomina();},500);
+      } else {
+        toast('Ya estaban todos guardados','s');
+      }
+      return;
+    }
+    var n=cola[i++];
+    var a=getasig(n);
+    // Double-check: skip if already exists (prevents duplicates)
+    var yaExiste=db.asistencia.some(function(r){return String(r.fecha)===f&&r.guardia===n;});
+    if(yaExiste){sig();return;}
+    var notaFinal=(notasDia[n]||'')+(getcat(n).varHoras&&horasReales[n]?' ['+horasReales[n]+'h]':''); var estG=estados[n];
+    postH({hoja:'Asistencia',accion:'agregar',fila:[f,n,svc,estG,notaFinal]})
+      .then(function(){
+        db.asistencia.push({fecha:f,guardia:n,servicio:svc,estatus:estG,notas:notaFinal});
+        if(estG==='Renuncia'){ FECHAS_RENUNCIA[n]=f; savePersonalLocal(); }
+        guardados++;
+        sig();
+      })
+      .catch(function(){sig();});
+  }
+  sig();
+}
+
+// ══ HISTORIAL ══
+function renderHist(){
+  var fe=document.getElementById('fil-est').value;
+  var fn=document.getElementById('fil-nom').value.toLowerCase();
+  var ff=document.getElementById('fil-fec').value;
+  var rows=db.asistencia.filter(function(r){return(!fe||r.estatus===fe)&&(!fn||r.guardia.toLowerCase().includes(fn))&&(!ff||String(r.fecha)===ff);}).sort(function(a,b){return String(b.fecha).localeCompare(String(a.fecha));});
+  var html='';
+  rows.forEach(function(r){
+    var idx=db.asistencia.indexOf(r);
+    html+='<tr><td style="color:#888">'+r.fecha+'</td><td><div class="nc"><div class="av">'+ini(r.guardia)+'</div>'+r.guardia+'</div></td><td style="color:#666">'+(r.servicio||'—')+'</td><td>'+badge(r.estatus)+'</td><td style="color:#185FA5;font-style:italic;font-size:12px">'+(r.notas||'')+'</td><td><button class="delbtn" data-del="asistencia" data-idx="'+idx+'">✕</button></td></tr>';
+  });
+  document.getElementById('hist-tbl').innerHTML=html||'<tr><td colspan="6" class="empty">Sin registros</td></tr>';
+}
+function limpFil(){document.getElementById('fil-est').value='';document.getElementById('fil-nom').value='';document.getElementById('fil-fec').value='';renderHist();}
+
+// ══ SERVICIOS ══
+function renderSvc(){
+  var fil=document.getElementById('fil-svc').value;
+
+  // Asignados: exactamente el mismo mapeo que Asistencia Rapida
+  // getasig(n).svc es la fuente de verdad, igual que en la vista "Por servicio" de AR
+  var asignadosPorSvc={};
+  PERSONAL.filter(function(n){
+    return CUBRE_DESCANSOS.indexOf(n)<0;
+  }).forEach(function(n){
+    var s=getasig(n).svc||'Sin asignar';
+    if(!asignadosPorSvc[s]) asignadosPorSvc[s]=[];
+    asignadosPorSvc[s].push(n);
+  });
+
+  // Presentes hoy: de esos mismos guardias asignados, cuantos marcaron Presente
+  var todayReg=db.asistencia.filter(function(r){return String(r.fecha)===hoy();});
+  var presHoy={};
+  todayReg.forEach(function(r){
+    if(r.estatus==='Presente'||r.estatus==='Retardo'||r.estatus==='Descanso Trabajado')
+      presHoy[r.guardia]=true;
+  });
+
+  var rows=SERVICIOS.map(function(s){
+    var listaAsig=asignadosPorSvc[s]||[];
+    var asignados=listaAsig.length;
+    // Count only guardias assigned to this service who are present today
+    var presentes=listaAsig.filter(function(n){return presHoy[n];}).length;
+    var pct=asignados>0?Math.round(presentes/asignados*100):0;
+    // "Sin personal" only when truly no one is assigned
+    // If assigned > 0 but presentes = 0 → "Sin asistencia" (no attendance yet today)
+    var todayDow=new Date().getDay();
+    var hayServHoy=diaTieneServicio(s,todayDow);
+    var estatus;
+    if(asignados===0) estatus='Sin personal';
+    else if(!hayServHoy) estatus='Sin servicio hoy';
+    else if(presentes>=asignados) estatus='Cubierto';
+    else if(presentes===0) estatus='Sin asistencia';
+    else estatus='Incompleto';
+    return{servicio:s,requeridos:asignados,cubiertos:presentes,pct:pct,estatus:estatus,hayServ:hayServHoy};
+  }).filter(function(r){
+    if(!fil) return r.requeridos>0; // hide services with 0 assigned
+    return (fil==='Cubierto'&&r.estatus==='Cubierto')||
+           (fil==='Incompleto'&&r.estatus==='Incompleto')||
+           (fil==='Sin asistencia'&&r.estatus==='Sin asistencia')||
+           (fil==='Sin personal'&&r.estatus==='Sin personal');
+  });
+
+  var html='';
+  rows.forEach(function(r){
+    var col=r.pct===100?'#1D9E75':r.pct===0?'#c0392b':'#EF9F27';
+    var esOficina=r.servicio===OFICINA_SVC;
+    var noHoy=!r.hayServ;
+    var rbg=esOficina?'background:#f0f6ff':noHoy?'background:#fafafa':'';
+    html+='<tr style="'+rbg+(noHoy?';opacity:.55':'')+'">'
+      +'<td style="font-weight:500">'+r.servicio
+      +(esOficina?' <span style="font-size:10px;color:#185FA5;background:#d0e4f7;padding:1px 6px;border-radius:10px">Oficina</span>':'')
+      +(noHoy?' <span style="font-size:10px;color:#aaa;background:#f0f0f0;padding:1px 5px;border-radius:10px">No opera hoy</span>':'')+'</td>'
+      +'<td style="text-align:center">'+r.requeridos+'</td>'
+      +'<td style="text-align:center">'+r.cubiertos+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:8px"><div class="pbb" style="width:80px"><div class="pb" style="width:'+r.pct+'%;background:'+col+'"></div></div><span style="font-size:12px;color:#888">'+r.pct+'%</span></div></td>'
+      +'<td>'+badge(r.estatus)+'</td>'
+      +'<td style="font-size:11px;color:#aaa">'+r.requeridos+' asignados</td>'
+      +'</tr>';
+  });
+  document.getElementById('svc-tbl').innerHTML=html||'<tr><td colspan="6" class="empty">Sin servicios</td></tr>';
+}
+function saveSvc(){
+  var n=document.getElementById('ms-nom').value.trim();
+  var r=parseInt(document.getElementById('ms-req').value)||0;
+  var c=parseInt(document.getElementById('ms-cub').value)||0;
+  if(!n){toast('Escribe el nombre','e');return;}
+  var e=c===0?'Sin personal':c<r?'Incompleto':'Cubierto';
+  postH({hoja:'Servicios',accion:'agregar',fila:[n,r,c,e]}).then(function(){db.servicios.push({servicio:n,requeridos:r,cubiertos:c,estatus:e});renderSvc();renderDashboard();closeM('svc');toast('Servicio agregado','s');}).catch(function(){toast('Error','e');});
+}
+
+// ══ PRE-NOMINA ══
+function getSem(){
+  var h=new Date(hoy()+'T12:00:00'), wd=h.getDay();
+  var dom=new Date(h); dom.setDate(h.getDate()-wd+(semOff*7));
+  var sab=new Date(dom); sab.setDate(dom.getDate()+6);
+  return{ini:dom.toISOString().split('T')[0],fin:sab.toISOString().split('T')[0],dom:dom,sab:sab};
+}
+
+function cHoras(ent,sal,tc){
+  var def=THRS[tc]||12;
+  if(!ent||!sal) return def;
+  var h1=parseInt(ent.split(':')[0]),m1=parseInt(ent.split(':')[1]);
+  var h2=parseInt(sal.split(':')[0]),m2=parseInt(sal.split(':')[1]);
+  var mins=(h2*60+m2)-(h1*60+m1);
+  if(mins<0) mins+=1440;
+  return mins/60;
+}
+
+function calcG(g,ts,ps,as){
+  var c=getcat(g), a=getasig(g);
+  var pctE=parseFloat(document.getElementById('cfg-extra').value)/100||1;
+  var pctD=parseFloat(document.getElementById('cfg-dom').value)/100||1;
+  var dFal=parseFloat(document.getElementById('cfg-falta').value)||250;
+  var dRet=parseFloat(document.getElementById('cfg-ret').value)||50;
+  var thr=c.t||0;
+  var conceptos=[],totP=0,totN=0,dias=0,hExtra=0,hTot=0;
+
+  // Build virtual turnos from asistencia
+  var fConT={};
+  ts.forEach(function(t){fConT[t.fecha]=true;});
+  var tvirt=[];
+  as.forEach(function(ar){
+    var f=String(ar.fecha);
+    if(fConT[f]) return;
+    if(ar.estatus==='Presente'||ar.estatus==='Retardo'){
+      tvirt.push({fecha:f,guardia:g,servicio:a.svc,turno:a.tc,entrada:'',salida:'',tipoDia:'normal',notas:ar.notas||''});
+    } else if(ar.estatus==='Descanso Trabajado'){
+      tvirt.push({fecha:f,guardia:g,servicio:a.svc,turno:a.tc,entrada:'',salida:'',tipoDia:'descanso_trab',notas:ar.notas||''});
+    } else if(ar.estatus==='Permiso con Goce'){
+      tvirt.push({fecha:f,guardia:g,servicio:a.svc,turno:a.tc,entrada:'',salida:'',tipoDia:'permiso_goce',notas:ar.notas||''});
+    }
+  });
+  var todos=ts.concat(tvirt);
+
+  todos.forEach(function(t){
+    var h=cHoras(t.entrada,t.salida,t.turno);
+    hTot+=h; dias++;
+    var h2 = t.horasReal || h;
+    var base=h2*thr;
+    h=h2; // use real hours for display
+    var tnom={M1:'Mañana 07-19',M2:'Mañana 08-18',M3:'Mañana 06-18',N1:'Tarde/Noche 17-08',N2:'Nocturno 19-07',N3:'Nocturno 18-06','24':'24hrs',X:'Custom'}[t.turno]||t.turno;
+
+    if(t.tipoDia==='permiso_goce'){ conceptos.push({txt:'Permiso con Goce '+t.fecha,m:base,p:true}); totP+=base; return; }
+    if(t.tipoDia==='descanso_trab'){
+      // Descanso trabajado: pago normal del turno (sin multiplicador)
+      conceptos.push({txt:'Descanso Trabajado '+t.fecha,m:base,p:true}); totP+=base; return;
+    }
+
+    // Pago simple: horas x tarifa, sin multiplicadores
+    conceptos.push({txt:'Turno '+tnom+' ('+h.toFixed(1)+'h) '+t.fecha,m:base,p:true}); totP+=base;
+
+    // Contar horas extra para referencia pero sin pago adicional
+    var ex=h-12;
+    if(ex>0){ hExtra+=ex; }
+
+    // Domingo/festivo: NO se paga extra automaticamente, se agrega manualmente con ajuste
+    // Doblete: pago normal sin multiplicador
+    if(t.tipoDia==='doblete'){ conceptos.push({txt:'Doblete '+t.fecha,m:base,p:true}); totP+=base; }
+
+    // Notas del turno
+    if(t.notas&&t.notas.trim()) conceptos.push({txt:'📝 '+t.fecha+': '+t.notas,m:0,p:true,esNota:true});
+  });
+
+  // Descanso = dia libre sin pago (no cuenta como turno trabajado)
+  var fal=as.filter(function(a){return a.estatus==='Falta';}).length;
+  var ret=as.filter(function(a){return a.estatus==='Retardo';}).length;
+  var psg=as.filter(function(a){return a.estatus==='Permiso sin Goce';}).length;
+  var inc=as.filter(function(a){return a.estatus==='Incapacidad';}).length;
+  var ren=as.filter(function(a){return a.estatus==='Renuncia';}).length;
+
+  if(fal>0){conceptos.push({txt:'Desc. bono por falta ('+fal+')',m:fal*dFal,p:false});totN+=fal*dFal;}
+  // Retardo: solo se descuentan horas no trabajadas via ajuste manual
+  // No hay descuento fijo por retardo
+  if(psg>0) conceptos.push({txt:'Permiso sin Goce ('+psg+' día/s)',m:0,p:false});
+  if(inc>0) conceptos.push({txt:'Incapacidad ('+inc+' día/s)',m:0,p:false});
+  if(ren>0) conceptos.push({txt:'Renuncia registrada',m:0,p:false});
+
+  if(c.i>0){conceptos.push({txt:'INFONAVIT (fijo)',m:c.i,p:false});totN+=c.i;}
+  if(c.f>0){conceptos.push({txt:'FONACOT (fijo)',m:c.f,p:false});totN+=c.f;}
+  if(c.p>0){conceptos.push({txt:'Préstamo (fijo)',m:c.p,p:false});totN+=c.p;}
+
+  ps.forEach(function(p){
+    if(p.tipo==='bono'){conceptos.push({txt:p.concepto,m:p.monto,p:true});totP+=p.monto;}
+    else{conceptos.push({txt:(p.tipo==='prestamo'?'Préstamo':'Descuento')+': '+p.concepto,m:p.monto,p:false});totN+=p.monto;}
+  });
+
+  return{conceptos:conceptos,totP:totP,totN:totN,neto:totP-totN,dias:dias,hExtra:hExtra.toFixed(1),hTot:hTot.toFixed(1)};
+}
+
+function renderNomina(){
+  var sem=getSem();
+  document.getElementById('sem-lbl').textContent='Período '+getPeriodo(sem.ini)+': '+sem.dom.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})+' – '+sem.sab.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+  var ts=db.turnos.filter(function(t){return t.fecha>=sem.ini&&t.fecha<=sem.fin;});
+  var as=db.asistencia.filter(function(a){return String(a.fecha)>=sem.ini&&String(a.fecha)<=sem.fin;});
+  var ps=db.prestamos.filter(function(p){return p.fecha>=sem.ini&&p.fecha<=sem.fin;});
+  var seen={}, gs=[];
+  ts.forEach(function(t){if(!seen[t.guardia]){seen[t.guardia]=1;gs.push(t.guardia);}});
+  as.forEach(function(a){if(!seen[a.guardia]){seen[a.guardia]=1;gs.push(a.guardia);}});
+  gs.sort();
+  var totNom=0,totEx=0,totDes=0;
+  gs.forEach(function(g){var r=calcG(g,ts.filter(function(t){return t.guardia===g;}),ps.filter(function(p){return p.guardia===g;}),as.filter(function(a){return a.guardia===g;}));totNom+=r.neto;totEx+=parseFloat(r.hExtra);totDes+=r.totN;});
+  document.getElementById('rng').innerHTML='<div class="rnc"><div class="rnl">Guardias semana</div><div class="rnv b">'+gs.length+'</div></div><div class="rnc"><div class="rnl">Total a pagar</div><div class="rnv g">$'+fmtMXN(totNom)+'</div></div><div class="rnc"><div class="rnl">Horas extra</div><div class="rnv a">'+totEx.toFixed(1)+' hrs</div></div><div class="rnc"><div class="rnl">Total descuentos</div><div class="rnv r">$'+fmtMXN(totDes)+'</div></div>';
+  if(!gs.length){
+    var sem2=getSem();
+    var totalAsist=db.asistencia.length;
+    var enSem=db.asistencia.filter(function(a){return String(a.fecha)>=sem2.ini&&String(a.fecha)<=sem2.fin;}).length;
+    document.getElementById('nom-lista').innerHTML='<div class="empty" style="padding:3rem 0">Sin registros esta semana.<br><small style="color:#aaa">Total asistencia en BD: '+totalAsist+' · En esta semana ('+sem2.ini+' a '+sem2.fin+'): '+enSem+'<br>Si ya guardaste asistencia, da clic en ↻ Sincronizar y vuelve aquí.</small></div>';
+    return;
+  }
+  var html='';
+  gs.forEach(function(g){
+    var r=calcG(g,ts.filter(function(t){return t.guardia===g;}),ps.filter(function(p){return p.guardia===g;}),as.filter(function(a){return a.guardia===g;}));
+    var id='dg_'+g.replace(/\W/g,'_');
+    var cRows='';
+    r.conceptos.forEach(function(c){
+      if(c.esNota) cRows+='<div class="cr" style="background:#f0f6ff;color:#185FA5;font-style:italic"><span>'+c.txt+'</span><span></span></div>';
+      else cRows+='<div class="cr '+(c.p?'pos':'neg')+'"><span>'+c.txt+'</span><span class="mn">'+(c.m>0?(c.p?'':'-'):'')+'$'+c.m.toFixed(2)+'</span></div>';
+    });
+    cRows+='<div class="cr" style="background:#f0f4f8"><span style="color:#888;font-size:12px">Percepciones brutas</span><span style="color:#1D9E75;font-weight:500">$'+r.totP.toFixed(2)+'</span></div>';
+    cRows+='<div class="cr" style="background:#f0f4f8"><span style="color:#888;font-size:12px">Total descuentos</span><span style="color:#c0392b;font-weight:500">-$'+r.totN.toFixed(2)+'</span></div>';
+    cRows+='<div class="cr tot"><span>NETO A PAGAR</span><span style="color:#185FA5;font-size:15px">$'+fmtMXN(r.neto)+'</span></div>';
+    html+='<div class="dg"><div class="dgh" data-tog="'+id+'"><div class="dghl"><div class="av">'+ini(g)+'</div><div><div style="font-weight:500;font-size:14px">'+g+'</div>'+(PUESTOS[g]?'<div style="font-size:11px;color:#185FA5">'+PUESTOS[g]+'</div>':'')+'</div><span style="font-size:12px;color:#888">'+r.dias+' días · '+r.hTot+'h</span>'+(parseFloat(r.hExtra)>0?'<span class="badge bA">'+r.hExtra+'h extra</span>':'')+'</div><div class="dghr">'+(r.totN>0?'<span style="color:#c0392b;font-size:13px">-$'+r.totN.toFixed(2)+'</span>':'')+'<span style="font-size:15px;font-weight:600;color:#1D9E75">$'+fmtMXN(r.neto)+'</span><span style="color:#aaa">▾</span></div></div><div class="dgb" id="'+id+'">'+cRows+'</div></div>';
+  });
+  document.getElementById('nom-lista').innerHTML=html;
+}
+
+function prevTurno(){
+  var g=document.getElementById('mt-guardia').value;
+  var pnl=document.getElementById('mt-prev');
+  if(!g){pnl.style.display='none';return;}
+  var c=getcat(g), tc=document.getElementById('mt-turno').value;
+  var ent=document.getElementById('mt-ent').value, sal=document.getElementById('mt-sal').value;
+  var tipo=document.getElementById('mt-tipo').value;
+  var pctE=parseFloat(document.getElementById('cfg-extra').value)/100||1;
+  var pctD=parseFloat(document.getElementById('cfg-dom').value)/100||1;
+  var h=cHoras(ent,sal,tc), perc=h*c.t;
+  // No extra multipliers - just hours x rate
+  if(tipo==='doblete') perc+=h*c.t; // doblete: double the base pay
+  var desc=c.i+c.f+c.p, neto=perc-desc;
+  document.getElementById('mt-prev-body').innerHTML='<div style="display:flex;flex-wrap:wrap;gap:14px"><div><div style="font-size:11px;color:#888">TARIFA</div><div style="font-weight:600;color:#185FA5">$'+c.t+'/h</div></div><div><div style="font-size:11px;color:#888">HORAS</div><div style="font-weight:600">'+h.toFixed(1)+'h</div></div><div><div style="font-size:11px;color:#888">PERCEPCIONES</div><div style="font-weight:600;color:#1D9E75">$'+perc.toFixed(2)+'</div></div>'+(desc>0?'<div><div style="font-size:11px;color:#888">DESCUENTOS</div><div style="font-weight:600;color:#c0392b">-$'+desc.toFixed(2)+'</div></div>':'')+'<div><div style="font-size:11px;color:#888">NETO DÍA</div><div style="font-weight:700;font-size:15px;color:'+(neto>=0?'#1D9E75':'#c0392b')+'">$'+neto.toFixed(2)+'</div></div></div>';
+  pnl.style.display='block';
+}
+
+function saveTurno(){
+  var f=document.getElementById('mt-fecha').value, g=document.getElementById('mt-guardia').value;
+  var sv=document.getElementById('mt-servicio').value==='__otro__'?prompt('Nombre del servicio:'):document.getElementById('mt-servicio').value;
+  var tc=document.getElementById('mt-turno').value, en=document.getElementById('mt-ent').value;
+  var sa=document.getElementById('mt-sal').value, td=document.getElementById('mt-tipo').value;
+  var no=document.getElementById('mt-notas').value.trim();
+  if(!f||!g){toast('Fecha y guardia son obligatorios','e');return;}
+  postH({hoja:'Turnos',accion:'agregar',fila:[f,g,sv,tc,en,sa,td,no]}).then(function(){db.turnos.push({fecha:f,guardia:g,servicio:sv,turno:tc,entrada:en,salida:sa,tipoDia:td,notas:no});closeM('turno');renderNomina();toast('Turno registrado','s');}).catch(function(){toast('Error','e');});
+}
+
+function savePrest(){
+  var g=document.getElementById('mp-guardia').value, f=document.getElementById('mp-fecha').value;
+  var m=parseFloat(document.getElementById('mp-monto').value)||0, ti=document.getElementById('mp-tipo').value;
+  var co=document.getElementById('mp-concepto').value.trim();
+  if(!g||!f||!m){toast('Completa todos los campos','e');return;}
+  postH({hoja:'Prestamos',accion:'agregar',fila:[f,g,m,ti,co]}).then(function(){db.prestamos.push({fecha:f,guardia:g,monto:m,tipo:ti,concepto:co});closeM('prest');renderNomina();toast('Registro guardado','s');}).catch(function(){toast('Error','e');});
+}
+
+function exportNom(){
+  var sem=getSem();
+  var ts=db.turnos.filter(function(t){return t.fecha>=sem.ini&&t.fecha<=sem.fin;});
+  var as=db.asistencia.filter(function(a){return String(a.fecha)>=sem.ini&&String(a.fecha)<=sem.fin;});
+  var ps=db.prestamos.filter(function(p){return p.fecha>=sem.ini&&p.fecha<=sem.fin;});
+  var seen={},gs=[];
+  ts.forEach(function(t){if(!seen[t.guardia]){seen[t.guardia]=1;gs.push(t.guardia);}});
+  as.forEach(function(a){if(!seen[a.guardia]){seen[a.guardia]=1;gs.push(a.guardia);}});
+  gs.sort();
+  var csv='Guardia,Días,Horas,Horas Extra,Percepciones,Descuentos,Neto\n';
+  gs.forEach(function(g){var r=calcG(g,ts.filter(function(t){return t.guardia===g;}),ps.filter(function(p){return p.guardia===g;}),as.filter(function(a){return a.guardia===g;}));csv+='"'+g+'",'+r.dias+','+r.hTot+','+r.hExtra+','+r.totP.toFixed(2)+','+r.totN.toFixed(2)+','+r.neto.toFixed(2)+'\n';});
+  var a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='COPS_Nomina_'+sem.ini+'_'+sem.fin+'.csv'; a.click(); toast('Exportado','s');
+}
+
+// ══ PERSONAL MANAGEMENT ══
+function loadPersonal(){
+  try{
+    var d=localStorage.getItem('cops_personal');
+    if(d){
+      var saved=JSON.parse(d);
+      // Replace PERSONAL completely with saved version (saved is the truth)
+      // First collect all names from saved
+      var savedNames=saved.map(function(g){return g.nombre;});
+      // Remove any PERSONAL entries that are in saved (will be replaced)
+      // Keep entries NOT in saved (hardcoded defaults not yet edited)
+      PERSONAL=PERSONAL.filter(function(n){return savedNames.indexOf(n)<0;});
+      // Add saved entries with their data
+      saved.forEach(function(g){
+        PERSONAL.push(g.nombre);
+        // Preserve hardcoded svc if localStorage has empty svc
+        var savedSvc=g.svc||(ASIG[g.nombre]?ASIG[g.nombre].svc:'');
+        ASIG[g.nombre]={svc:savedSvc,tc:g.tc||'M1',h:g.h||12};
+        if(g.ingreso) INGRESOS[g.nombre]=g.ingreso; else delete INGRESOS[g.nombre];
+        if(g.renuncia) FECHAS_RENUNCIA[g.nombre]=g.renuncia; else delete FECHAS_RENUNCIA[g.nombre];
+        CAT[g.nombre]={t:g.t,i:g.i,f:g.f,p:g.p,dias:g.dias||6};
+        if(g.puesto) PUESTOS[g.nombre]=g.puesto; else delete PUESTOS[g.nombre];
+      });
+      PERSONAL.sort();
+    }
+  }catch(e){}
+}
+
+function savePersonalLocal(){
+  var data=PERSONAL.map(function(n){
+    var a=ASIG[n]||{svc:'',tc:'M1',h:12};
+    var c=CAT[n]||{t:0,i:0,f:0,p:0};
+    return{nombre:n,svc:a.svc,tc:a.tc,h:a.h,t:c.t,i:c.i,f:c.f,p:c.p,puesto:PUESTOS[n]||'',ingreso:INGRESOS[n]||'',renuncia:FECHAS_RENUNCIA[n]||''};
+  });
+  try{localStorage.setItem('cops_personal',JSON.stringify(data));}catch(e){}
+  // Refresh all selects
+  refreshSelects();
+}
+
+function refreshSelects(){
+  var selects=['mt-guardia','mp-guardia','np-guardia'];
+  selects.forEach(function(id){
+    var el=document.getElementById(id);
+    if(!el) return;
+    var cur=el.value;
+    el.innerHTML='<option value="">Seleccionar...</option>';
+    PERSONAL.forEach(function(n){el.innerHTML+='<option value="'+n+'">'+n+'</option>';});
+    if(cur) el.value=cur;
+  });
+  var mgs=document.getElementById('mg-servicio');
+  if(mgs){
+    var cur=mgs.value;
+    mgs.innerHTML='<option value="">Sin asignar</option>';
+    SERVICIOS.forEach(function(s){mgs.innerHTML+='<option value="'+s+'">'+s+'</option>';});
+    if(cur) mgs.value=cur;
+  }
+}
+
+function renderPersonal(){
+  var busq=(document.getElementById('fil-personal').value||'').toLowerCase();
+  var turnoFil=document.getElementById('fil-turno-personal').value;
+  var lista=PERSONAL.filter(function(n){
+    var a=ASIG[n]||{tc:'M1'};
+    var esDiurno=['M1','M2','M3'].indexOf(a.tc)>=0;
+    if(busq&&!n.toLowerCase().includes(busq)) return false;
+    if(turnoFil==='diurno'&&!esDiurno) return false;
+    if(turnoFil==='nocturno'&&esDiurno) return false;
+    return true;
+  });
+  var html='';
+  lista.forEach(function(n){
+    var a=ASIG[n]||{svc:'',tc:'M1',h:12};
+    var c=CAT[n]||{t:0,i:0,f:0,p:0};
+    var idx=PERSONAL.indexOf(n);
+    var tlbl=TLBL[a.tc]||a.tc;
+    var esDiurno=['M1','M2','M3'].indexOf(a.tc)>=0;
+    var renN=getFechaRenuncia(n);
+    html+='<tr'+(renN?' style="opacity:.65;background:#fff8f8"':'')+'>'
+      +'<td><div class="nc"><div class="av">'+ini(n)+'</div><div><div style="font-weight:500">'+n+'</div>'+(PUESTOS[n]?'<div style="font-size:11px;color:#185FA5">'+PUESTOS[n]+'</div>':'')+(renN?'<div style="font-size:10px;color:#c0392b;font-weight:600">Baja '+renN+'</div>':'')+'</div></div></td>'
+      +'<td style="color:#666;font-size:12px">'+(PUESTOS[n]||'—')+'</td>'
+      +'<td style="font-size:12px">'+(a.svc||'—')+'</td>'
+      +'<td><span class="badge '+(esDiurno?'bB':'bP')+'">'+tlbl+'</span></td>'
+      +'<td style="text-align:center">'+a.h+'h</td>'
+      +'<td style="font-weight:500;color:'+(c.t>0?'#1a1a1a':'#c0392b')+'">'+(c.t>0?'$'+(c.t*a.h*(c.dias||6)).toFixed(2)+'/sem':'Sin tarifa')+'</td>'
+      +'<td style="font-size:12px;color:#666">'+(c.i>0?'$'+c.i:'—')+'</td>'
+      +'<td style="font-size:12px;color:#666">'+(c.f>0?'$'+c.f:'—')+'</td>'
+      +'<td style="font-size:12px;color:#666">'+(c.p>0?'$'+c.p:'—')+'</td>'
+      +'<td style="display:flex;gap:4px">'
+      +'<button class="btn btns" data-edit-guardia="'+idx+'">✏</button>'
+      +'<button class="delbtn" data-del-guardia="'+idx+'" title="Eliminar guardia">✕</button>'
+      +'</td></tr>';
+  });
+  document.getElementById('personal-tbl').innerHTML=html||'<tr><td colspan="10" class="empty">Sin guardias</td></tr>';
+}
+
+function openNuevoGuardia(){
+  refreshSelects();
+  document.getElementById('mg-titulo').textContent='Agregar guardia';
+  document.getElementById('mg-idx').value='-1';
+  document.getElementById('mg-nombre').value='';
+  document.getElementById('mg-puesto').value='';
+  document.getElementById('mg-servicio').value='';
+  document.getElementById('mg-ingreso').value='';
+  document.getElementById('mg-turno').value='M1';
+  document.getElementById('mg-horas').value='12';
+  document.getElementById('mg-semanal').value='';
+  document.getElementById('mg-dias').value='6';
+  document.getElementById('mg-tarifa').value='';
+  document.getElementById('mg-prev-tarifa').style.display='none';
+  document.getElementById('mg-infonavit').value='0';
+  document.getElementById('mg-fonacot').value='0';
+  document.getElementById('mg-prestamo').value='0';
+  openM('guardia');
+}
+
+function editGuardia(idx){
+  var n=PERSONAL[idx];
+  if(!n) return;
+  refreshSelects();
+  var a=ASIG[n]||{svc:'',tc:'M1',h:12};
+  var c=CAT[n]||{t:0,i:0,f:0,p:0};
+  document.getElementById('mg-titulo').textContent='Editar guardia';
+  document.getElementById('mg-idx').value=idx;
+  document.getElementById('mg-nombre').value=n;
+  document.getElementById('mg-puesto').value=PUESTOS[n]||'';
+  document.getElementById('mg-servicio').value=a.svc||'';
+  document.getElementById('mg-ingreso').value=INGRESOS[n]||'';
+  document.getElementById('mg-turno').value=a.tc||'M1';
+  document.getElementById('mg-horas').value=a.h||12;
+  var dias = c.dias || 6;
+  var semanal = c.t ? (c.t * (a.h||12) * dias) : 0;
+  document.getElementById('mg-semanal').value = semanal.toFixed(2);
+  document.getElementById('mg-dias').value = dias;
+  document.getElementById('mg-tarifa').value = c.t||0;
+  if(semanal>0){
+    document.getElementById('mg-prev-tarifa-body').textContent = '$' + (c.t||0).toFixed(2) + '/hora  ($' + ((c.t||0)*(a.h||12)).toFixed(2) + '/día · $' + semanal.toFixed(2) + '/semana)';
+    document.getElementById('mg-prev-tarifa').style.display='block';
+  }
+  document.getElementById('mg-infonavit').value=c.i||0;
+  document.getElementById('mg-fonacot').value=c.f||0;
+  document.getElementById('mg-prestamo').value=c.p||0;
+  openM('guardia');
+}
+
+function calcTarifaHora(){
+  var semanal = parseFloat(document.getElementById('mg-semanal').value)||0;
+  var dias    = parseFloat(document.getElementById('mg-dias').value)||6;
+  var horas   = parseFloat(document.getElementById('mg-horas').value)||12;
+  var prev    = document.getElementById('mg-prev-tarifa');
+  if(semanal>0 && dias>0 && horas>0){
+    var tarifa = semanal / dias / horas;
+    document.getElementById('mg-tarifa').value = tarifa.toFixed(2);
+    document.getElementById('mg-prev-tarifa-body').textContent = '$' + tarifa.toFixed(2) + '/hora  ($' + (tarifa*horas).toFixed(2) + '/día · $' + semanal.toFixed(2) + '/semana)';
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+function saveGuardia(){
+  var nombre=document.getElementById('mg-nombre').value.trim();
+  if(!nombre){toast('El nombre es obligatorio','e');return;}
+  var idx=parseInt(document.getElementById('mg-idx').value);
+  var puesto=document.getElementById('mg-puesto').value.trim();
+  var svc=document.getElementById('mg-servicio').value;
+  var tc=document.getElementById('mg-turno').value;
+  var h=parseFloat(document.getElementById('mg-horas').value)||12;
+  var t=parseFloat(document.getElementById('mg-tarifa').value)||0;
+  var i=parseFloat(document.getElementById('mg-infonavit').value)||0;
+  var f=parseFloat(document.getElementById('mg-fonacot').value)||0;
+  var p=parseFloat(document.getElementById('mg-prestamo').value)||0;
+
+  if(idx>=0){
+    // Edit existing - handle name change
+    var oldNombre=PERSONAL[idx];
+    // Remove old name from PERSONAL completely
+    PERSONAL.splice(idx,1);
+    // Remove old data
+    delete ASIG[oldNombre]; delete CAT[oldNombre]; delete PUESTOS[oldNombre];
+    // Add with new name
+    if(PERSONAL.indexOf(nombre)<0){
+      PERSONAL.push(nombre);
+      PERSONAL.sort();
+    }
+  } else {
+    // Add new
+    if(PERSONAL.indexOf(nombre)>=0){toast('Este guardia ya existe','e');return;}
+    PERSONAL.push(nombre);
+    PERSONAL.sort();
+  }
+  var dias2 = parseFloat(document.getElementById('mg-dias').value)||6;
+  var ingreso=document.getElementById('mg-ingreso').value||'';
+  ASIG[nombre]={svc:svc,tc:tc,h:h};
+  if(ingreso) INGRESOS[nombre]=ingreso; else delete INGRESOS[nombre];
+  CAT[nombre]={t:t,i:i,f:f,p:p,dias:dias2};
+  if(puesto) PUESTOS[nombre]=puesto; else delete PUESTOS[nombre];
+  savePersonalLocal();
+  closeM('guardia');
+  renderPersonal();
+  renderDashboard();
+  toast(idx>=0?'Guardia actualizado':'Guardia agregado','s');
+}
+
+// Add event delegation for edit/delete guardia buttons
+document.addEventListener('change', function(e){
+  if(e.target.classList.contains('hrs-input')){
+    var nombre=e.target.dataset.guardia;
+    var val=parseFloat(e.target.value)||0;
+    if(val>0){ horasReales[nombre]=val; renderResumen(); renderGG(); }
+    return;
+  }
+  if(e.target.classList.contains('cd-svc')){
+    cdServicio[e.target.dataset.guardia]=e.target.value;
+    renderResumen();
+    return;
+  }
+  if(e.target.classList.contains('cd-turno')){
+    cdTurno[e.target.dataset.guardia]=e.target.value;
+    renderResumen();
+    return;
+  }
+});
+
+
+
+// Load saved personal on start
+loadPersonal();
+
+// ══ REPORTE HORIZONTAL ══
+function renderReporte(){
+  // Get week range (reuses semOff logic but with repOff)
+  var h=new Date(hoy()+'T12:00:00'), wd=h.getDay();
+  var dom=new Date(h); dom.setDate(h.getDate()-wd+(repOff*7));
+  var dias=[];
+  var DNAMES=['D','L','M','M','J','V','S'];
+  for(var i=0;i<7;i++){
+    var d=new Date(dom); d.setDate(dom.getDate()+i);
+    dias.push({fecha:d.toISOString().split('T')[0],lbl:DNAMES[i]+' '+d.getDate()});
+  }
+  var semIni=dias[0].fecha, semFin=dias[6].fecha;
+  var domDate=new Date(dom);
+  document.getElementById('rep-lbl').textContent='Período '+getPeriodo(semIni)+': '+domDate.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})+' – '+new Date(semFin+'T12:00:00').toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+
+  var as=db.asistencia.filter(function(a){return String(a.fecha)>=semIni&&String(a.fecha)<=semFin;});
+  var ps=db.prestamos.filter(function(p){return p.fecha>=semIni&&p.fecha<=semFin;});
+
+  // Short status labels
+  var SLBL={'Presente':'A','Falta':'F','Retardo':'R','Permiso con Goce':'PG','Permiso sin Goce':'PS',
+    'Incapacidad':'INC','Renuncia':'REN','Descanso':'D','Descanso Trabajado':'DT','Vacaciones':'V',''  :'-'};
+  var SCOL={'Presente':'#1D9E75','Falta':'#c0392b','Retardo':'#d48806','Permiso con Goce':'#185FA5',
+    'Permiso sin Goce':'#6246d6','Incapacidad':'#888','Renuncia':'#1a1a1a','Descanso':'#aaa',
+    'Descanso Trabajado':'#e67e22','Vacaciones':'#8e44ad',''  :'#ccc'};
+
+  // Build HTML table
+  var th='<tr style="background:#185FA5;color:#fff"><th style="text-align:left;padding:8px 10px;white-space:nowrap">Guardia</th>';
+  dias.forEach(function(d){ th+='<th style="padding:8px 6px;text-align:center;min-width:55px">'+d.lbl+'</th>'; });
+  th+='<th style="padding:8px 10px;text-align:right">Hrs</th><th style="padding:8px 10px;text-align:right">Desc.</th><th style="padding:8px 10px;text-align:right;color:#90EE90">Neto</th></tr>';
+
+  var rows=''; var grandTotal=0; var grandDesc=0;
+  PERSONAL.forEach(function(nombre){
+    var asG=as.filter(function(a){return a.guardia===nombre;});
+    if(!asG.length) return; // solo muestra quien tiene registros
+    var c=getcat(nombre), a=getasig(nombre);
+    var totalHrs=0, totalPago=0, totalDesc=c.i+c.f+c.p;
+    var psG=ps.filter(function(p){return p.guardia===nombre;});
+    psG.forEach(function(p){ if(p.tipo!=='bono') totalDesc+=p.monto; else totalPago+=p.monto; });
+
+    var celdas='';
+    dias.forEach(function(d){
+      var reg=asG.find(function(a){return String(a.fecha)===d.fecha;});
+      var est=reg?reg.estatus:'';
+      var lbl=SLBL[est]||'-';
+      var col=SCOL[est]||'#ccc';
+      var pagoDia=0;
+      if(est==='Presente'||est==='Retardo'||est==='Permiso con Goce'||est==='Descanso Trabajado'){
+        pagoDia=c.t*a.h;
+        totalHrs+=a.h;
+        totalPago+=pagoDia;
+      }
+      var pagoStr=pagoDia>0?'<div style="font-size:9px;color:#666">$'+pagoDia.toFixed(0)+'</div>':'';
+      celdas+='<td style="text-align:center;padding:5px 4px;border-bottom:1px solid #f0f1f3">'
+        +'<div style="font-weight:600;color:'+col+';font-size:12px">'+lbl+'</div>'
+        +pagoStr+'</td>';
+    });
+
+    var neto=totalPago-totalDesc;
+    grandTotal+=neto; grandDesc+=totalDesc;
+    rows+='<tr>'
+      +'<td style="padding:7px 10px;border-bottom:1px solid #f0f1f3;white-space:nowrap;font-size:12px"><strong>'+nombre+'</strong></td>'
+      +celdas
+      +'<td style="padding:7px 10px;border-bottom:1px solid #f0f1f3;text-align:right;font-size:12px;font-weight:500">'+totalHrs+'h</td>'
+      +'<td style="padding:7px 10px;border-bottom:1px solid #f0f1f3;text-align:right;font-size:12px;color:#c0392b">-$'+totalDesc.toFixed(2)+'</td>'
+      +'<td style="padding:7px 10px;border-bottom:1px solid #f0f1f3;text-align:right;font-size:13px;font-weight:700;color:#185FA5">$'+neto.toFixed(2)+'</td>'
+      +'</tr>';
+  });
+
+  // Grand total row
+  rows+='<tr style="background:#f0f4f8">'
+    +'<td colspan="'+(7+1)+'" style="padding:10px;font-weight:700;font-size:13px">TOTAL NÓMINA</td>'
+    +'<td style="padding:10px;text-align:right;font-size:12px;color:#c0392b;font-weight:600">-$'+grandDesc.toFixed(2)+'</td>'
+    +'<td style="padding:10px;text-align:right;font-size:15px;font-weight:700;color:#1D9E75">$'+grandTotal.toFixed(2)+'</td>'
+    +'</tr>';
+
+  if(!rows){
+    document.getElementById('reporte-container').innerHTML='<div class="empty" style="padding:3rem">Sin registros esta semana. Sincroniza primero.</div>';
+    return;
+  }
+
+  document.getElementById('reporte-container').innerHTML=
+    '<table style="width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">'
+    +'<thead>'+th+'</thead><tbody>'+rows+'</tbody></table>';
+}
+
+// ══ PRESTAMOS TRACKER ══
+function savePrestamosLocal(){ try{localStorage.setItem('cops_prest',JSON.stringify(prestamosActivos));}catch(e){} }
+
+function renderPrestamos(){
+  if(!prestamosActivos.length){document.getElementById('prest-lista').innerHTML='<div class="empty">Sin préstamos activos. Usa "+ Nuevo préstamo" para registrar uno.</div>';return;}
+  var html='';
+  prestamosActivos.forEach(function(p,i){
+    var pagado=p.pagos?p.pagos.reduce(function(a,x){return a+x.monto;},0):0;
+    var restante=Math.max(0,p.total-pagado);
+    var pct=Math.min(100,Math.round(pagado/p.total*100));
+    var col=restante<=0?'#1D9E75':pct>50?'#d48806':'#c0392b';
+    html+='<div class="pcard"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px"><div><div style="font-weight:600;font-size:14px">'+p.guardia+'</div><div style="font-size:12px;color:#888;margin-top:2px">'+p.concepto+' · Inicio: '+p.fecha+'</div></div><div style="text-align:right"><div style="font-size:18px;font-weight:600;color:'+col+'">$'+fmtMXN(restante)+' restante</div><div style="font-size:12px;color:#888">de $'+fmtMXN(p.total)+' total</div></div></div><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div class="pbb" style="flex:1"><div class="pb" style="width:'+pct+'%;background:'+col+'"></div></div><span style="font-size:12px;color:#888;min-width:40px">'+pct+'%</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:#666">Desc. semanal: <strong>$'+fmtMXN(p.semanal)+'</strong></span><span style="font-size:12px;color:#666">Pagos: <strong>'+(p.pagos?p.pagos.length:0)+'</strong></span>'+(restante>0?'<button class="btn btnp btns" data-aplic="'+i+'">Aplicar descuento esta semana</button>':'<span class="badge bG">Liquidado</span>')+'<button class="btn btns" data-verpagos="'+i+'">Ver pagos</button></div></div>';
+  });
+  document.getElementById('prest-lista').innerHTML=html;
+}
+
+function aplicarDescPrestamo(i){
+  var p=prestamosActivos[i];
+  var pagado=p.pagos?p.pagos.reduce(function(a,x){return a+x.monto;},0):0;
+  var restante=Math.max(0,p.total-pagado);
+  var monto=Math.min(p.semanal,restante);
+  if(!confirm('¿Aplicar descuento de $'+fmtMXN(monto)+' a '+p.guardia+'?')) return;
+  if(!p.pagos) p.pagos=[];
+  p.pagos.push({fecha:hoy(),monto:monto});
+  savePrestamosLocal();
+  postH({hoja:'Prestamos',accion:'agregar',fila:[hoy(),p.guardia,monto,'prestamo',p.concepto+' (cuota '+(p.pagos.length)+'/'+Math.ceil(p.total/p.semanal)+')']}).then(function(){db.prestamos.push({fecha:hoy(),guardia:p.guardia,monto:monto,tipo:'prestamo',concepto:p.concepto});renderNomina();toast('Descuento aplicado: $'+fmtMXN(monto),'s');});
+  renderPrestamos();
+}
+
+function verPagos(i){
+  var p=prestamosActivos[i], pagos=p.pagos||[];
+  var txt='Pagos de '+p.guardia+':\n\n';
+  if(!pagos.length){txt+='Sin pagos aún.';}
+  else{pagos.forEach(function(pg,j){txt+=(j+1)+'. '+pg.fecha+' — $'+fmtMXN(pg.monto)+'\n';});}
+  alert(txt);
+}
+
+function calcPagos(){
+  var total=parseFloat(document.getElementById('np-total').value)||0;
+  var semanal=parseFloat(document.getElementById('np-semanal').value)||0;
+  var prev=document.getElementById('np-prev');
+  if(total>0&&semanal>0){
+    var n=Math.ceil(total/semanal);
+    document.getElementById('np-prev-body').innerHTML='<strong>'+n+'</strong> semanas de <strong>$'+fmtMXN(semanal)+'</strong>';
+    prev.style.display='block';
+  } else { prev.style.display='none'; }
+}
+
+function saveNuevoPrestamo(){
+  var g=document.getElementById('np-guardia').value;
+  var total=parseFloat(document.getElementById('np-total').value)||0;
+  var semanal=parseFloat(document.getElementById('np-semanal').value)||0;
+  var concepto=document.getElementById('np-concepto').value.trim()||'Préstamo';
+  var fecha=document.getElementById('np-fecha').value||hoy();
+  if(!g||!total||!semanal){toast('Completa todos los campos','e');return;}
+  prestamosActivos.push({guardia:g,total:total,semanal:semanal,concepto:concepto,fecha:fecha,pagos:[]});
+  savePrestamosLocal();
+  closeM('nprest');
+  renderPrestamos();
+  toast('Préstamo registrado','s');
+}
+
+// ══ RECLUTAMIENTO ══
+function renderRec(){
+  var fil=document.getElementById('fil-rec').value;
+  var rows=db.reclutamiento.filter(function(r){return!fil||r.estatus===fil;}).sort(function(a,b){return String(b.fecha).localeCompare(String(a.fecha));});
+  var html='';
+  rows.forEach(function(r){var idx=db.reclutamiento.indexOf(r);html+='<tr><td><div class="nc"><div class="av">'+ini(r.candidato)+'</div>'+r.candidato+'</div></td><td>'+badge(r.estatus)+'</td><td style="color:#888">'+r.fecha+'</td><td><button class="delbtn" data-del="reclutamiento" data-idx="'+idx+'">✕</button></td></tr>';});
+  document.getElementById('rec-tbl').innerHTML=html||'<tr><td colspan="4" class="empty">Sin candidatos</td></tr>';
+}
+function saveRec(){
+  var n=document.getElementById('mc-nom').value.trim(), e=document.getElementById('mc-est').value, f=document.getElementById('mc-fecha').value;
+  if(!n||!f){toast('Completa los campos','e');return;}
+  postH({hoja:'Reclutamiento',accion:'agregar',fila:[n,e,f]}).then(function(){db.reclutamiento.unshift({candidato:n,estatus:e,fecha:f});renderRec();closeM('cand');toast('Candidato agregado','s');}).catch(function(){toast('Error','e');});
+}
+
+// ══ ELIMINAR ══
+function delRow(tbl,idx){
+  if(!confirm('¿Eliminar este registro?')) return;
+  var hojas={asistencia:'Asistencia',servicios:'Servicios',reclutamiento:'Reclutamiento',turnos:'Turnos',prestamos:'Prestamos'};
+  postH({hoja:hojas[tbl],accion:'eliminar',fila:idx}).then(function(){db[tbl].splice(idx,1);if(tbl==='asistencia'){renderHist();renderDashboard();}if(tbl==='servicios'){renderSvc();renderDashboard();}if(tbl==='reclutamiento')renderRec();toast('Eliminado','s');}).catch(function(){toast('Error','e');});
+}
+
+// ══ HORARIOS ══
+function renderHorariosModal(){
+  var DNAMES=['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
+  var DSHORT=['D','L','Ma','Mi','J','V','S'];
+  var out='';
+
+  SERVICIOS.forEach(function(s,si){
+    var sch=getSvcSchedule(s);
+    var bg=si%2===0?'#fff':'#f9fafb';
+    out+='<div style="border:1px solid #e2e4e9;border-radius:8px;margin-bottom:10px;overflow:hidden">';
+    // Header
+    out+='<div style="background:#185FA5;color:#fff;padding:8px 12px;font-size:12px;font-weight:600">'+s+'</div>';
+    // Days grid
+    out+='<div style="display:grid;grid-template-columns:repeat(7,1fr);background:'+bg+'">';
+    for(var d=0;d<7;d++){
+      var day=sch[d]||{dow:d,activo:true,ent:'07:00',sal:'19:00'};
+      var isActive=day.activo;
+      out+='<div style="border-right:1px solid #f0f1f3;padding:8px 4px;text-align:center;'+(d===6?'border-right:none':'')+(isActive?'':'background:#f8f8f8;opacity:.6')+'">';
+      // Day name + checkbox
+      out+='<div style="font-size:11px;font-weight:600;color:'+(isActive?'#185FA5':'#aaa')+';margin-bottom:4px">'+DNAMES[d]+'</div>';
+      out+='<label style="display:flex;align-items:center;justify-content:center;gap:3px;font-size:10px;cursor:pointer;margin-bottom:6px">';
+      out+='<input type="checkbox" class="h-act" data-si="'+si+'" data-d="'+d+'" '+(isActive?'checked':'')+' style="cursor:pointer">';
+      out+='<span>'+(isActive?'Activo':'Off')+'</span></label>';
+      // Time inputs
+      out+='<div style="display:flex;flex-direction:column;gap:3px">';
+      out+='<input type="time" class="h-ent" data-si="'+si+'" data-d="'+d+'" value="'+(day.ent||'')+'" '+(isActive?'':'disabled')+
+           ' style="font-size:9px;width:100%;border:1px solid #ddd;border-radius:3px;padding:2px;text-align:center;background:'+(isActive?'#fff':'#f0f0f0')+'" placeholder="Entrada">';
+      out+='<input type="time" class="h-sal" data-si="'+si+'" data-d="'+d+'" value="'+(day.sal||'')+'" '+(isActive?'':'disabled')+
+           ' style="font-size:9px;width:100%;border:1px solid #ddd;border-radius:3px;padding:2px;text-align:center;background:'+(isActive?'#fff':'#f0f0f0')+'" placeholder="Salida">';
+      out+='</div></div>';
+    }
+    out+='</div></div>';
+  });
+
+  document.getElementById('horarios-lista').innerHTML=out;
+
+  // Add toggle listeners for checkboxes
+  document.querySelectorAll('.h-act').forEach(function(cb){
+    cb.addEventListener('change', function(){
+      var si=this.dataset.si, d=this.dataset.d;
+      var isOn=this.checked;
+      var dayDiv=this.closest('div[style*="border-right"]');
+      // Update label text
+      var lbl=this.nextElementSibling;
+      if(lbl) lbl.textContent=isOn?'Activo':'Off';
+      // Enable/disable time inputs
+      var ent=document.querySelector('.h-ent[data-si="'+si+'"][data-d="'+d+'"]');
+      var sal=document.querySelector('.h-sal[data-si="'+si+'"][data-d="'+d+'"]');
+      if(ent){ ent.disabled=!isOn; ent.style.background=isOn?'#fff':'#f0f0f0'; }
+      if(sal){ sal.disabled=!isOn; sal.style.background=isOn?'#fff':'#f0f0f0'; }
+      // Update column visual
+      var col=this.closest('div[style*="text-align:center"]');
+      if(col){ col.style.opacity=isOn?'1':'0.6'; col.style.background=isOn?'':'#f8f8f8'; }
+    });
+  });
+}
+function saveHorarios(){
+  SERVICIOS.forEach(function(s,si){
+    var schedule=[];
+    for(var d=0;d<7;d++){
+      var cb=document.querySelector('.h-act[data-si="'+si+'"][data-d="'+d+'"]');
+      var ent=document.querySelector('.h-ent[data-si="'+si+'"][data-d="'+d+'"]');
+      var sal=document.querySelector('.h-sal[data-si="'+si+'"][data-d="'+d+'"]');
+      schedule.push({
+        dow:d,
+        activo:cb?cb.checked:true,
+        ent:ent?ent.value:'07:00',
+        sal:sal?sal.value:'19:00'
+      });
+    }
+    if(!SVC_HORARIOS[s]) SVC_HORARIOS[s]={};
+    SVC_HORARIOS[s].schedule=schedule;
+  });
+  try{localStorage.setItem('cops_svc_horarios',JSON.stringify(SVC_HORARIOS));}catch(e){}
+  closeM('horarios');
+  renderSvc();
+  renderDashboard();
+  toast('Horarios guardados','s');
+}
+function loadHorarios(){
+  try{
+    var d=localStorage.getItem('cops_svc_horarios');
+    if(d){
+      var sv=JSON.parse(d);
+      Object.keys(sv).forEach(function(s){
+        if(!SVC_HORARIOS[s]) SVC_HORARIOS[s]={};
+        // Support both old {dias:[]} and new {schedule:[]} formats
+        if(sv[s].schedule) SVC_HORARIOS[s].schedule=sv[s].schedule;
+        else if(sv[s].dias){
+          // Migrate old format to new
+          var sch=[];
+          for(var d2=0;d2<7;d2++){
+            sch.push({dow:d2,activo:sv[s].dias.indexOf(d2)>=0,ent:'07:00',sal:'19:00'});
+          }
+          SVC_HORARIOS[s].schedule=sch;
+        }
+      });
+    }
+  }catch(e){}
+}
+
+// ══ PLANTILLA DE PERSONAL ══
+function renderPlantilla(){
+  var h='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  h+='<thead><tr style="background:#185FA5;color:#fff">'
+    +'<th style="padding:8px 12px;text-align:left">Guardia</th>'
+    +'<th style="padding:8px;text-align:left">Servicio</th>'
+    +'<th style="padding:8px;text-align:center">Turno</th>'
+    +'<th style="padding:8px;text-align:center">Ingreso</th>'
+    +'<th style="padding:8px;text-align:center">Antigüedad</th>'
+    +'<th style="padding:8px;text-align:center">Estatus</th>'
+    +'</tr></thead><tbody>';
+  var today=hoy();
+  PERSONAL.forEach(function(n,i){
+    var a=getasig(n), ing=getFechaIngreso(n);
+    var antiguedad='—';
+    if(ing){
+      var dias=Math.floor((new Date(today+'T12:00:00')-new Date(ing+'T12:00:00'))/(1000*60*60*24));
+      antiguedad=dias<30?(dias+'d'):(dias<365?Math.floor(dias/30)+'m':Math.floor(dias/365)+'a '+Math.floor((dias%365)/30)+'m');
+    }
+    var bg=i%2===0?'#fff':'#f9fafb';
+    var esCD=CUBRE_DESCANSOS.indexOf(n)>=0;
+    var ren2=getFechaRenuncia(n);
+    var rowBg2=ren2?'#fff8f8':bg;
+    var estatusPlantilla=ren2?'<span style="font-size:10px;color:#c0392b;font-weight:600">Baja '+ren2+'</span>'
+      :(ing&&today>=ing?'<span style="font-size:10px;color:#1D9E75;font-weight:600">Activo</span>'
+      :'<span style="font-size:10px;color:#888">Pendiente ingreso</span>');
+    h+='<tr style="background:'+rowBg2+';border-bottom:1px solid #f0f1f3">'
+      +'<td style="padding:7px 12px"><div style="font-size:12px;font-weight:500">'+n+'</div>'
+      +(esCD?'<div style="font-size:10px;color:#e67e22">🔄 Cubre Descansos</div>':'')+'</td>'
+      +'<td style="padding:7px 8px;font-size:11px;color:#555">'+(a.svc||'Sin asignar')+'</td>'
+      +'<td style="padding:7px 8px;text-align:center;font-size:11px">'+(a.tc||'—')+'</td>'
+      +'<td style="padding:7px 8px;text-align:center;font-size:11px;color:'+(ing?'#185FA5':'#aaa')+'">'+(ing||'—')+'</td>'
+      +'<td style="padding:7px 8px;text-align:center;font-size:11px;color:#888">'+antiguedad+'</td>'
+      +'<td style="padding:7px 8px;text-align:center">'+estatusPlantilla+'</td>'
+      +'</tr>';
+  });
+  h+='</tbody></table>';
+  var el=document.getElementById('plantilla-tbl');
+  if(el) el.innerHTML=h;
+}
+
+// ══ ARRANQUE ══
+loadHorarios();
+syncAll();
+</script>
+</body>
+</html>
